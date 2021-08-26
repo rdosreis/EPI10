@@ -1,0 +1,405 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Apresentações"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+# O professor
+
+## Olá!
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', out.height='80%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'hi_my_name_is.png'))
+
+```
+
+## Olá! {.allowframebreaks}
+
+\ttfamily
+
+- Desde __outubro de 2017__ eu sou Professor do __Departamento de Estatística__ e faço parte do Corpo Docente do __Programa de Pós Graduação em Epidemiologia__ da __Universidade Federal do Rio Grande do sul__ (UFRGS). Além disso, eu atuo como pesquisador no __Estudo Longitudinal de Saúde do Adulto (ELSA-Brasil)__.
+
+- Eu me formei __Bacharel em Estatística__ pelo Departamento de Estatística da UFRGS em __2007__, e __Mestre__ (__2010__) e __Doutor__ (__2014__) __em Estatística__ pelo __Programa de Pós Graduação em Estatística__ da __Universidade Federal de Minas Gerais__. 
+- A minha dissertação de mestrado, intitulada _Técnicas estatísticas para avaliação de novos marcadores de risco: aplicações envolvendo o Modelo de Cox_, foi orientada pelos Professores Enrico A. Colosimo e Maria do Carmo P. Nunes.
+- A minha tese de doutorado, intitulada _Análise hierárquica de múltiplos sistemas reparáveis_, foi orientada pelos Professores Enrico A. Colosimo e Gustavo L. Gilardoni.
+
+- Os meus interesses de pesquisa são __Inferência causal em epidemiologia__, __Análise de mediação__, __Modelos de predição de risco__ e __Análise de sobrevivência__.
+- Em estatística aplicada eu tenho interesse na __epidemiologia do Diabetes Mellitus__.
+
+<!-- - Eu sou um grande entusiasta do R! -->
+<!-- - Nascido em Porto Velho, morador de Porto Alegre, com uma passagem (estatisticamente) significante por Belo Horizonte! -->
+<!-- - Sigo acreditando que a Terra é redonda! -->
+
+# A disciplina
+
+## Objetivos
+
+- Apresentar métodos básicos de análise de sobrevivência, de programas estatísticos para realização de análises e interpretação de resultados.
+- Proporcionar aos alunos conhecimentos e ferramentas para avaliação crítica de métodos e resultados em publicações.
+
+## Organização
+
+- __Disciplina:__ Análise de Sobrevivência
+- __Turma:__ U
+- __Modalidade:__ Ensino remoto emergencial \structure{(Moodle)}
+- __Professor:__ Rodrigo Citton Padilha dos Reis
+    + e-mail: `citton.padilha@ufrgs.br` ou `rodrigocpdosreis@gmail.com` 
+    + Sala: B215 do Instituto de Matemática e Estatística
+
+## Aulas e material didático
+
+- __Aulas__ (teóricas e práticas)
+    + Exposição e __discussão__ dos conteúdos
+        - __Faremos leituras semanais de artigos e capítulos de livros__
+    + Exemplos
+- __Notas de aula__
+    + Slides
+    + Arquivos de rotinas em `R`
+- __Exercícios__
+    + Listas de exercícios
+    + Para casa
+    + Questionários do Moodle
+- __Canais de comunicação:__
+    + Durante as aulas
+    + Moodle: aulas, materiais, listas de exercícios
+    + Sala de aula virtual: notas das avaliações
+    + e-mail do professor
+
+## Aulas e material didático
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', paged.print=FALSE}
+knitr::include_graphics(here::here('images','videoaula-2.png'))
+```
+
+- __Aulas:__ Quintas-feiras, das 15hs às 18hs, no MConf do Moodle da disciplina.
+    + As aulas serão realizadas de maneira __síncrona__ com __gravação__ e disponibilizadas para posterior consulta.
+
+## Aulas e material didático
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='10%', paged.print=FALSE}
+knitr::include_graphics(here::here('images','Rlogo.png'))
+```
+
+- Exemplos e exercícios com o apoio do computador:
+    + `R` e `RStudio`
+    
+```{r, echo=FALSE, eval=TRUE}
+
+x <- rnorm(n = 100, mean = 10, sd = 1)
+
+```
+
+```{r, echo=TRUE, eval=TRUE, fig.align='center', out.width='50%'}
+
+hist(x, col = 'black', border = 'white')
+
+```
+
+## Conteúdo programático {.allowframebreaks}
+
+- __Área 1__
+    + Introdução e conceitos básicos
+    + Especificando o tempo de sobrevivência
+    + Estimação e comparação das curvas de sobreviência
+
+- __Área 2__
+    + Análise de regressão utilizando o modelo de riscos proporcionais
+    + Diagnóstico do modelo
+    + Extensões do modelo de Cox
+
+- __Área 3__
+    + Tópicos especiais: eventos múltiplo, riscos competitivos, modelos de fragilidade
+
+## Avaliação
+
+- Será realizado uma avaliação de cada área por meio de questionários e tarefas do Moodle.
+- Cada atividade de avaliação vale 10 pontos
+- Será realizado um um teste no Moodle (individual) como atividade de recuperação ($TR$)
+    + Para os alunos que não atingirem o conceito mínimo
+    + __Este teste abrange todo o conteúdo da disciplina__
+
+## Avaliação
+
+$$
+MF = \frac{A_1 + A_2 + A_3}{3}
+$$
+
++ __A:__ $9 \leq MF \leq 10$
++ __B:__ $7,5 \leq MF < 9$
++ __C:__ $6 \leq MF < 7,5$
+
++ Se $MF < 6$ o aluno poderá realizar o teste de recuperação e neste caso
+
+$$
+MF' = MF \times 0,4 + TR \times 0,6
+$$
+
+- __C:__ $MF' \geq 6$
+- __D:__ $MF' < 6$
+
+## Referências bibliográficas
+
+```{r echo=FALSE, fig.align='right', message=FALSE, warning=FALSE, out.width='15%', paged.print=FALSE}
+knitr::include_graphics(here('images','ctanlion.png'))
+```
+
+### Principais
+
+\footnotesize
+
+Colosimo, E. A. e Giolo, S. R. __Análise de sobrevivência aplicada__, Blucher, 2006.
+
+Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. __Análise de sobrevivência: teoria e aplicações em saúde__, 2ª ed. Editora Fiocruz, 2011.
+
+### Complementares
+
+\footnotesize
+
+Kleinbaum, D. G. e Klein, M. __Survival Analysis: A Self‐Learning Text__, 3ª ed. Springer, 2012.
+
+# O que é análise de sobrevivência e como ela é aplicada?
+
+## O que é análise de sobrevivência? {.allowframebreaks}
+
+- Antes de abordarmos esta questão, vamos pensar sobre o que "sobrevive".
+- Nos casos considerados aqui, estamos falando sobre coisas que têm uma expectativa de vida, aquelas coisas que "nascem", vivem, mudam de status enquanto vivem e depois morrem.
+- Portanto, "sobrevivência" é a descrição de um período de vida ou um processo de vida antes da ocorrência de uma mudança de status ou, usando o jargão apropriado, um \structure{evento}.
+
+\framebreak
+
+- Em termos de "sobrevivência", o que pensamos primeiro são organismos como várias espécies animais e outras formas de vida.
+- Após o nascimento, uma entidade viva cresce, passa por um processo de envelhecimento e então se decompõe gradualmente.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'arvore-processo-envelhecimento.png'))
+
+```
+
+## O que é análise de sobrevivência? {.allowframebreaks}
+
+- As mudanças graduais e desenvolvimentos ao longo de um curso de vida refletem o \structure{processo de sobrevivência}.
+- Para os seres humanos em particular, \structure{sobrevivemos} da \structure{morte}, \structure{doença} e \structure{deficiência funcional}.
+
+## O que é análise de sobrevivência? {.allowframebreaks}
+
+- Embora a biologia seja sua base primária, o significado da sobrevivência é amplamente social.
+- Em diferentes fases da vida, frequentamos a escola, casamos, desenvolvemos uma carreira profissional e nos aposentamos ao envelhecer.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'processo-envelhecimento.jpg'))
+
+```
+
+## O que é análise de sobrevivência? {.allowframebreaks}
+
+- Nesse ínterim, muitos de nós vivenciamos desestruturação familiar, envolvemo-nos em atividades sociais, cultivamos hábitos e passatempos pessoais e fazemos ajustes em nossa vida diária de acordo com as condições físicas e mentais.
+
+- Essas facetas sociais são coisas que não são organismos, mas seu tempo de vida é como o de um ser vivo: coisas que vivem, coisas que têm começos, transformações e depois mortes.
+
+## O que é análise de sobrevivência? {.allowframebreaks}
+
+- Em um contexto mais amplo, a sobrevivência também pode incluir eventos como quebra de um automóvel, o colapso de um sistema político em um país ou a realocação de uma unidade de trabalho.
+
+- Em casos como esse e em outros, a existência dita processos de sobrevivência e sua mudança de status, indicada pela ocorrência de eventos.
+
+## Aplicação da análise de sobrevivência {.allowframebreaks}
+
+- A prática da análise de sobrevivência é o uso da razão para __descrever__, __medir__ e __analisar__ \structure{características de eventos} para fazer previsões sobre não apenas a sobrevivência, mas também \structure{processos de tempo até o evento}\footnote{\emph{Time-to- event processes}.} - o período de tempo até a mudança de status ou a ocorrência de um evento - como:
+    + de vivos a mortos;
+    + de solteiros a casados;
+    +de saudáveis doentes.
+
+\framebreak
+
+- Como o "passar da vida", genética, biológica ou mecânica, pode ser interrompida por doença, violência, meio ambiente ou outros fatores, muitas pesquisas em análise de sobrevivência envolvem fazer \structure{comparações entre grupos} ou \structure{categorias de uma população}, ou examinar as \structure{variáveis que influenciam seus processos de sobrevivência}.
+
+- No campo acadêmico, a análise de sobrevivência é agora amplamente aplicada em uma longa lista de ciências aplicadas, devido consideravelmente à disponibilidade de \structure{dados longitudinais} que registram histórias de vários processos de sobrevivência e as ocorrências de vários eventos.
+<!-- - Atualmente, o conceito de sobrevivência não se refere mais simplesmente a um evento biomédico ou demográfico; em vez disso, ele se expande para indicar um escopo muito mais amplo de fenômenos caracterizados por \structure{processos de tempo para evento}. -->
+
+## Exemplos {.allowframebreaks}
+
+- Na \structure{pesquisa médica}, os \structure{ensaios clínicos} são usados regularmente para avaliar a eficácia de novos medicamentos ou tratamentos de doenças.
+    + Nessas configurações, os pesquisadores aplicam a análise de sobrevivência para comparar o \structure{risco de morte ou recuperação de doença} entre grupos populacionais que recebem diferentes medicamentos ou tratamentos.
+    + Os resultados dessa análise, por sua vez, podem fornecer informações importantes com implicações para a definição de políticas.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'ecr-01.jpg'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'ecr-02.jpg'))
+
+```
+
+\framebreak
+
+- Os dados de sobrevivência são comumente coletados e analisados nas \structure{ciências sociais}, com tópicos que variam amplamente, desde desemprego até reincidência no uso de drogas, ruptura conjugal, carreiras ocupacionais e outros processos sociais.
+
+- Na \structure{demografia}, além da análise da mortalidade, os pesquisadores se preocupam com processos de sobrevivência como o início do uso de anticoncepcionais, a migração interna e internacional e intervalos entre os primeiros nascidos vivos.
+
+\framebreak
+
+- No campo da \structure{saúde pública}, a análise de sobrevivência pode ser aplicada à análise da utilização de assistência à saúde.
+    + Essa avaliação é de especial importância para planejadores e acadêmicos, pois os sistemas de serviços de saúde refletem a organização política e econômica de uma sociedade e se preocupa com questões filosóficas fundamentais que envolvem vida, morte e qualidade de vida. 
+
+\framebreak
+
+- A análise de sobrevivência também teve amplas aplicações em algumas outras disciplinas, como \structure{engenharia}, \structure{ciência política}, \structure{gestão de negócios} e \structure{economia}.
+- Por exemplo, na engenharia, os cientistas aplicam a análise de sobrevivência para realizar testes de vida na durabilidade de produtos mecânicos ou elétricos\footnote{Geralmente, os métodos de análise de sobrevivência, quando aplicados em problemas de engenharia, são incorporados aos {\bf métodos de confiabilidade}.}.
+    + Os resultados de tais estudos podem ser usados para a melhoria da qualidade dos produtos.
+    
+# A história da análise de sobrevivência e seu progresso
+
+## Um breve histórico {.allowframebreaks}
+
+- Originalmente, a análise de sobrevivência era usada exclusivamente para investigações de mortalidade e morbidade nas estatísticas de registro vital.
+- A primeira análise aritmética dos processos de sobrevivência humana remonta ao \structure{século XVII}, quando o estatístico inglês \structure{John Graunt} publicou a primeira \structure{tábua de vida} em \structure{1662}.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'graunt.jpg'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'huygens.jpg'))
+
+```
+
+\framebreak
+
+- Por um longo período de tempo, a análise de sobrevivência foi considerada um instrumento analítico, principalmente nos estudos biomédicos e demográficos.
+- Numa fase posterior, expandiu-se gradualmente para o domínio da engenharia para descrever/avaliar o curso dos produtos industriais.
+
+\framebreak
+
+- Nos últimos cinquenta anos, o escopo da análise de sobrevivência cresceu tremendamente como consequência do rápido \structure{desenvolvimento da ciência da computação}, particularmente o avanço de poderosos pacotes de software estatístico.
+- A conveniência de usar software de computador para criar e utilizar modelos estatísticos complexos levou cientistas de muitas disciplinas a começar a usar modelos de sobrevivência.
+
+\framebreak
+
+- Como as aplicações da análise de sobrevivência cresceram rapidamente, a inovação metodológica se acelerou em um ritmo sem precedentes nas últimas décadas.
+- O advento do \structure{modelo de Cox} e a perspectiva da verossimilhança parcial em 1972 desencadeou o avanço de um grande número de métodos e técnicas estatísticas caracterizadas por modelagem de regressão na análise de dados de sobrevivência.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'cox.jpg'))
+
+```
+
+\framebreak
+
+- A principal contribuição do modelo de Cox, dada sua capacidade de gerar procedimentos de estimativa simplificados na análise de dados de sobrevivência, é o fornecimento de uma abordagem estatística flexível para modelar os processos de sobrevivência complicados associados a covariáveis mensuráveis.
+
+\framebreak
+
+- Mais recentemente, o surgimento da \structure{teoria dos processos de contagem}, um sistema de contagem único para a descrição da dinâmica de sobrevivência, destaca o início de uma nova era na análise de sobrevivência devido ao seu tremendo poder inferencial e alta flexibilidade para modelar \structure{eventos repetidos} para a mesma observação e alguns outros processos de sobrevivência complexos.
+    + Em particular, esta perspectiva moderna combina elementos na \structure{teoria de grandes amostras}, a \structure{teoria de martingales} e a \structure{teoria de integração estocástica}, fornecendo um novo conjunto de procedimentos estatísticos e regras na modelagem de dados de sobrevivência.
+
+# Características gerais da estrutura de dados de sobrevivência
+
+## Estrutura dos dados {.allowframebreaks}
+
+- Em essência, um processo de sobrevivência descreve um período de vida de um tempo de início especificado até a ocorrência de um evento particular.
+- Portanto, a \structure{principal característica} dos dados de sobrevivência é a descrição de uma \structure{mudança no status} como medida de resultado subjacente.
+- Mais formalmente, uma mudança de status é a ocorrência de um \structure{evento} que designa o fim de um período de vida ou o término de um processo de sobrevivência.
+
+\framebreak
+
+- Por exemplo, uma mudança de status ocorre quando uma pessoa morre, se casa ou quando um automóvel quebra.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='70%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'counting.png'))
+
+```
+
+\framebreak
+
+- Esta característica de um "salto" de status torna a análise de sobrevivência um tanto semelhante a algumas perspectivas estatísticas mais convencionais sobre dados de desfechos qualitativos, como o \structure{modelo logístico}.
+- Esses modelos tradicionais também podem ser usados para examinar uma mudança de status ou a ocorrência de um determinado evento, comparando o status no início e o status no final de um intervalo de observação.
+- Entretanto, essas abordagens \structure{ignoram o tempo de ocorrência} desse evento vitalício e, portanto, não possuem a capacidade de descrever um processo de tempo até o evento.
+    + A falta dessa capacidade pode ser prejudicial à qualidade dos resultados analíticos, gerando conclusões enganosas.
+
+\framebreak
+
+- Suponha que dois grupos da população têm a mesma taxa de ocorrência de um determinado evento até o final de um período de observação, mas os membros de um grupo costumam experimentar o evento significativamente mais tarde do que aqueles no outro.
+- O primeiro grupo populacional tem um padrão de sobrevivência vantajoso porque sua vida média é estendida.
+- Obviamente, a regressão logística ignora esse fator de tempo, não fornecendo informações precisas.
+
+\framebreak
+
+- A maioria dos modelos de sobrevivência leva em consideração o \structure{fator tempo} no salto de status.
+- Dada essa capacidade, a \structure{segunda característica} dos dados de sobrevivência é a \structure{descrição de um processo de tempo até o evento}.
+- Na literatura de análise de sobrevivência, \structure{o tempo de ocorrência de um} determinado \structure{evento} é considerado uma \structure{variável aleatória}, referida como __tempo do evento__, __tempo de falha__ ou __tempo de sobrevivência__.
+
+\framebreak
+
+- A \structure{terceira característica} principal da estrutura de dados de sobrevivência é a \structure{censura}.
+- Os dados de sobrevivência são geralmente coletados por um intervalo de tempo no qual as ocorrências de um determinado evento são observadas.
+- Como resultado, os pesquisadores só podem observar os eventos que ocorrem dentro de uma janela de monitoramento entre dois limites de tempo\footnote{Tempo de seguimento (\emph{follow up time}).}.
+- Consequentemente, os tempos de sobrevivência completos para muitas unidades sob exame não são observados, com perda de informações ocorrendo antes do início ou após o final do intervalo do estudo.
+- Algumas unidades podem ser perdidas para observação no meio de uma investigação devido a vários motivos.
+- Na análise de sobrevivência, esse status ausente em tempos de evento é chamado de censura, que pode ser dividido em uma variedade de tipos.
+- Para a maioria dos tipos de censura, uma seção de tempos de sobrevivência para observações censuradas é observável e pode ser utilizada no cálculo do risco de experimentar um determinado evento.
+    + Na análise de sobrevivência, esta porção de tempos observados é referida como \structure{tempos de sobrevivência censurados}.
+- Como a censura ocorre com frequência, a maioria das análises de sobrevivência lida literalmente com dados de sobrevivência incompletos e, consequentemente, os cientistas encontraram maneiras de usar essas informações limitadas para analisar corretamente os dados de sobrevivência incompletos com base em algumas suposições restritivas sobre a distribuição dos tempos de sobrevivência censurados.
+
+\framebreak
+
+- Como os processos de sobrevivência variam essencialmente com base nas características básicas das observações e condições ambientais, um campo considerável de análise de sobrevivência é conduzido por meio de \structure{modelagem de regressão de dados censurados} envolvendo uma ou mais variáveis preditoras.
+- Dada a adição de \structure{covariáveis}, a \structure{estrutura de dados de sobrevivência} pode ser vista como consistindo em informações sobre três fatores principais:
+    + tempos de sobrevivência;
+    + status de censura;
+    + e covariáveis.
+- Dada uma \structure{amostra aleatória} de \structure{$n$} unidades, a estrutura de dados para análise de sobrevivência na verdade contém \structure{$n$} destas triplas.
+- A maioria dos modelos de sobrevivência é construída sobre essa estrutura de dados.
+
+- Dadas as diferentes ênfases na variedade de recursos, a análise de sobrevivência também é conhecida como análise de duração, análise de tempo até o evento, análise de histórico de eventos ou análise de dados de confiabilidade.
+
+## Próxima aula
+
+- Caracterização dos dados de sobrevivência
+- Exemplos
+- Especificação dos tempos de sobrevivência
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Sejam tod@s bem-vind@s!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-8.jpg'))
+
+```
+
