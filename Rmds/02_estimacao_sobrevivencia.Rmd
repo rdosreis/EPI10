@@ -1,0 +1,498 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Estimação da curva de sobrevivência"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+# Introdução
+
+## Introdução {.allowframebreaks}
+
+- Os objetivos de uma análise estatística envolvendo dados de sobrevivência geralmente estão relacionados, em medicina ou epidemiologia, à \structure{identificação de fatores associados} para uma certa doença __(ou desfecho de interesse)__ ou à \structure{comparação de tratamentos} em um estudo clínico enquanto controlado por outros fatores.
+- Por mais complexo que seja o estudo, as respostas às perguntas de interesse são dadas a partir de um \structure{conjunto de dados de sobrevivência}, e o passo inicial de qualquer análise estatística consiste em uma \structure{descrição dos dados}.
+- A presença de observações censuradas é, contudo, um problema para as técnicas convencionais de análise descritiva.
+
+\framebreak
+
+- Os problemas gerados por observações censuradas podem ser ilustrados numa situação bem simples em que se tenha interesse na construção de um histograma.
+    + Se a amostra não contiver observações censuradas, a construção do histograma consiste na divisão do eixo do tempo em um certo número de intervalos e, em seguida, conta-se o número de ocorrências de falhas em cada intervalo.
+    + Entretanto, quando existem censuras, não é possível construir um histograma, pois não se conhece a frequência exata associada a cada intervalo.
+
+\framebreak
+
+- Nos textos básicos de estatística, uma análise descritiva consiste essencialmente em encontrar medidas de tendância central e variabilidade. 
+- Como a presença de censuras invalida este tipo de tratamento aos dados de sobrevivência, o __principal componente da análise descritiva__ envolvendo dados de tempo de vida é a __função de sobrevivência__, ou seja, \structure{$S(t) = \Pr(T > t)$}\footnote{Note que se $T$ é uma variável contínua, $S(t) = \Pr(T > t) = \Pr(T \geq t)$.}.
+- Nesta situação, o procedimento inicial é encontrar uma \structure{estimativa para esta função de sobrevivência} e então, a partir dela, estimar as estatísticas de interesse que usualmente são o __tempo médio__ ou __mediano__, alguns percentis ou certas frações de falhas em tempos fixos de acompanhamento. 
+
+# Estimação na ausência de censura
+
+## Estimação na ausência de censura {.allowframebreaks}
+
+- O histograma a seguir representa a distribuição dos tempos até um certo evento de um grupo de 54 indivíduos, em que o evento ocorreu para todos os elementos do grupo __(observações não censuradas)__.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'histograma_sem_censura.png'))
+
+```
+
+\framebreak
+
+- A probabilidade de sobrevivência no tempo $t = 400$ horas é estimada por
+
+\footnotesize
+
+\begin{align*}
+\widehat{S}(t) &= \frac{\# \mbox{indivíduos que não experimentaram o evento até o tempo } t = 400}{\# \mbox{indivíduos no estudo}}\\
+&= \frac{21}{54} = 0,39.
+\end{align*}
+
+\normalsize
+
+- Este número significa que 39% destes indivíduos sobrevivem mais que 400 horas.
+
+\framebreak
+
+- De forma geral, temos
+
+$$
+\widehat{S}(t)=\frac{1}{n}\sum_{i=1}^n{I(T_i \geq t)},
+$$
+em que $I(\cdot)$ é uma __função indicadora__, e $I(A) = 1$, se o evento $A$ ocorre, e $I(A) = 0$, se o evento $A$ não ocorre.
+
+\framebreak
+
+### Exemplo
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+intervalos <- levels(cut(x = seq(0, 800, by = 100), breaks = seq(0, 800, by = 100), include.lowest = F, right = FALSE))
+
+freq <- c(2, 5, 10, 16, 9, 7, 4, 1)
+
+s <- rep("", length(freq))
+
+tab <- data.frame(intervalos, freq, s)
+
+knitr::kable(tab,
+             col.names = c("Intervalos", "Frequência", "Sobrevivência"),
+             align = "ccc")
+```
+
+## Estimação na ausência de censura {.allowframebreaks}
+
+- A partir destes resultados, informações importantes sobre o tempo de vida dos indivíduos em estudo podem ser obtidas.
+
+- Também podemos utilizar estas estimativas para estimar a função de taxa de falha em um determinado intervalo:
+
+$$
+\widehat{\lambda}([400,500)) = \frac{\widehat{S}(400) - \widehat{S}(500)}{(500 - 400)\widehat{S}(400)} = \frac{0,39 - 0,22}{(100)0,39} = 0,0044/\mbox{hora}.
+$$
+
+# O Estimador de Kaplan-Meier
+
+## O Estimador de Kaplan-Meier {.allowframebreaks}
+
+- Na presença de censuras, o estimador de \structure{Kaplan-Meier}, também conhecido como o \structure{estimador limite-produto}, fornece uma comparação gráfica que de maneira apropriada leva em conta as observações censuradas.
+
+## Estimador de Kaplan-Meier\footnote{Kaplan, E. L., Meier, P., Nonparanietric estimation from incomplete observations. \textit{JASA} {\bf 53}: 457-81, 1958.}
+
+\begin{columns}[c]
+\column{1in}
+\includegraphics[width=0.9\columnwidth]{images/kaplan}
+\column{1in}
+\includegraphics[width=0.9\columnwidth]{images/meier}
+\column{3in}
+{\scriptsize
+\begin{itemize}
+\item O artigo de Kaplan e Meier começa em 1952 quando Paul Meier, então na \emph{Johns Hopkins University}, encontrou o artigo de Greenwood na duração do câncer.
+\item Um ano após, no \emph{Bell Laboratories}, Kaplan se interessou tempos de vida de componentes da rede de telefones.
+\end{itemize}
+}
+\end{columns}
+
+
+\begin{itemize}
+{\scriptsize
+\item Kaplan e Meier trabalharam independentemente e submeteram seus respectivos trabalhos para o \emph{Journal of American Statistical Association}.
+\item O JASA os encorajou a submeterem um trabalho conjunto.
+\item Kaplan and Meier levaram mais 4 anos para resolverem diferenças em suas abordagens e publicaram um método que se tornou a abordagem não paramétrica padrão na análise de tempos de vida com observações censurdas.
+}
+\end{itemize}
+
+## O Estimador de Kaplan-Meier {.allowframebreaks}
+
+- O estimador de Kaplan-Meier é uma adaptação da função de sobrevivência empírica que, na ausência de censuras, é definida como:
+
+\begin{align*}
+\widehat{S}(t) &= \frac{\# \mbox{observações que não experimentaram o evento até o tempo } t}{\# \mbox{observações no estudo}} \\
+&= \frac{1}{n}\sum_{i=1}^n{I(T_i \geq t)}.
+\end{align*}
+
+\framebreak
+
+- $\widehat{S}(t)$ é uma __função escada__ com degraus nos __tempos observados de falha__ de tamanho $1/n$, em que $n$ é o tamanho da amostra.
+- Se exitirem empates em um certo tempo $t$, o tamanho do degrau fica multiplicado pelo número de empates.
+- O estimador de Kaplan-Meier, na sua construção, considera tantos intervalos de tempo quantos forem o __número de falhas distintas__.
+- Os limites dos intervalos de tempo são os tempos de falha da amostra.
+
+\framebreak
+
+::: {.block}
+
+### Relembrando: exemplo estudo de hepatite
+
+\footnotesize
+
+\begin{table}[]
+\begin{tabular}{ll}
+\hline
+Grupo     & Tempo de sobrevivência em semanas                                \\ \hline
+Controle  & 1+, 2+, 3, 3, 3+, 5+, 5+, 16+, 16+, 16+, 16+, 16+, 16+, 16+, 16+ \\
+Esteroide & 1, 1, 1, 1+, 4+, 5, 7, 8, 10, 10+, 12+, 16+, 16+, 16+            \\ \hline
+\end{tabular}
+\end{table}
+
+:::
+
+\normalsize
+
+- __Pergunta:__ quantos tempos de falha distintos são observados no grupo "Esteroide"?
+
+\framebreak
+
+- Ideia intuitiva do estimador: reescrever $S(t) = \Pr(T \geq t)$ em termos de probabilidades condicionais. Seja $t_0 < t_1$, então
+
+
+$$
+S(t_1) = \Pr(T \geq t_0)\Pr(T \geq t_1|T \geq t_0).
+$$
+
+- No exemplo, 
+
+$$
+S(5) = \Pr(T \geq 5) = \Pr(T \geq 1, T \geq 5) = \Pr(T \geq 1)\Pr(T \geq 5|T \geq 1).
+$$
+\normalsize
+
+- Assim, para o indivíduo sobreviver por 5 semanas, ele vai precisar sobreviver, em um primeiro passo, à primeira semana e depois sobreviver à quinta semana, sabendo-se que ele sobreviveu à primeira semana.
+
+\framebreak
+
+- Os tempos \structure{1} e \structure{5} foram tomados por serem os dois primeiros tempos distintos de falha nos dados do __grupo esteroide__.
+- Os passos são gerados a partir de intervalos definidos pela ordenação dos tempos de forma que cada um deles começa em um tempo de falha observado e termina no próximo tempo de falha.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+tempos <- c(0, 1, 5, 7, 8, 10, 16)
+intervalos <- levels(cut(x = tempos,
+                         breaks = tempos,
+                         include.lowest = F, right = FALSE))
+
+tab <- data.frame(tempos[-length(tempos)], intervalos)
+
+knitr::kable(tab,
+             col.names = c("Tempos ordenados $(t_j)$","Intervalos"),
+             align = "cc")
+```
+
+\framebreak
+
+- Todos os indivíduos estavam vivos em $t = 0$ e se mantêm até a primeira morte que ocorre em $t = 1$ semana.
+    + Então a estimativa de $S(t)$ deve ser $1$ neste intervalo compreendido entre 0 e 1 semana.
+- No valor correspondente a 1 semana, a \structure{estimativa deve cair} devido a três mortes que ocorrem neste tempo.
+    + No segundo intervalo, $[1,5)$, existem então 14 indivíduos que estavam vivos \structure{(sob risco; $n_2 = 14$)} antes de $t = 1$ e 3 morrem \structure{($d_2 = 3$)}.
+- Desta forma, a estimativa da probabilidade condicional de morte neste intervalo é 3/14 e a probabilidade de sobreviver é 1 - 3/14. Isto pode ser escrito como
+
+$$
+\widehat{S}(1) = \widehat{\Pr}(T \geq 0)\widehat{\Pr}(T \geq 1|T \geq 0) = (1)\times(1 - 3/14) = 11/14 = 0,786.
+$$
+
+\framebreak
+
+::: {.block}
+
+### Exercício
+
+1. Utilizando a mesma ideia, calcule $\widehat{S}(5)$.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Exercício
+
+2. Utilizando a mesma ideia, complete a tabela.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+tempos <- c(0, 1, 5, 7, 8, 10, 16)
+intervalos <- levels(cut(x = tempos,
+                         breaks = tempos,
+                         include.lowest = F, right = FALSE))
+
+d <- c(0, 3, 1, 1, 1, 1)
+n <- c(14, 14, 9, 8, 7, 6)
+s <- c(1, 0.786, rep("", 4))
+
+tab <- data.frame(tempos[-length(tempos)], intervalos, d, n, s)
+
+knitr::kable(tab,
+             col.names = c("Tempos ordenados $(t_j)$","Intervalos", "$d_j$", "$n_j$", "$\\widehat{S}(t_j+)$"),
+             align = "ccccc")
+```
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Exercício
+
+3. Faça o gráfico para $\widehat{S}(t)$.
+
+:::
+
+\framebreak
+
+- Se considerermos uma amostra de tamanho $n$ e $k$ \structure{($k\leq n$)} falhas distintas $t_1 < t_2 < \ldots < t_k$, podemos reescrever $S(t)$ para qualquer $t_j$ observado:
+
+$$
+S(t_j) = (1 - q_1)(1 - q_2)\ldots(1 - q_j),
+$$
+
+em que $q_j = \Pr(T\in [t_{j-1}, t_j)|T \geq t_{j-1}])$.
+
+\framebreak
+
+- O estimador de Kaplan-Meier estima estas probabilidades por
+
+$$
+\hat{q}_j=\frac{\mbox{nº de eventos em } t_j}{\mbox{nº de observações sob risco em } t_{j}-}, j = 1,\ldots,k.
+$$
+
+\framebreak
+
+- Formulação equivalente
+    + $t_1 < t_2 < \ldots < t_k$ são $k$ tempos distintos de falha
+    + $d_j$ é o número de falhas em $t_j$, $j = 1, 2, \ldots, k$
+    + $n_j$ é o número de observações sob risco em $t_j$ (não falharam e nem censuraram até o instante imediatamente anterior a $t_j$)
+
+$$
+\widehat{S}(t) = \prod_{j:t_j<t}{\left(\frac{n_j - d_j}{n_j}\right)} = \prod_{j:t_j<t}{\left(1 - \frac{d_j}{n_j}\right)}.
+$$
+
+\framebreak
+
+- O estimador de Kaplan-Meier é
+    + uma função do tempo tipo escada
+    + não muda entre tempos de eventos
+    + não muda em tempos de censura
+
+\framebreak
+
+- Uma estimativa de $S(t)$ está sujeita a variações amostrais que devem ser descritas em termos de \structure{estimações intervalares}.
+- Para tal, precisamos de uma expressão para a \structure{variância de $\widehat{S}(t)$}.
+
+::: {.block}
+
+### Fórmula de Greenwood
+
+- A estimativa da __variância assintótica__ do estimador de Kaplan-Meier é dada por:
+
+$$
+\widehat{\Var}[\widehat{S}(t)] = [\widehat{S}(t)]^2\sum_{j:t_j<t}{\frac{d_j}{n_j(n_j - d_j)}},
+$$
+
+que é conhecida como a \structure{fórmula de Greenwood}.
+
+:::
+
+\framebreak
+
+- A estimativa da variância de $\widehat{S}(5)$, para o exemplo considerado, é, então, dada por:
+
+$$
+\widehat{\Var}(\widehat{S}(5)) = (0,698)^2\left[\frac{3}{(14)(11)} + \frac{1}{(9)(8)}\right] = 0,0163.
+$$
+\framebreak
+
+::: {.block}
+
+### Intervalo de confiança para $S(t)$
+
+- Para \structure{grandes amostras}, $\widehat{S}(t)$, para $t$ fixo, tem uma distribuição aproximadamente normal.
+
+- Assim, um intervalo de $100(1-\alpha)$% de confiança para $S(t)$ é dado por
+
+$$
+\widehat{S}(t) \pm z_{\alpha/2} \sqrt{\widehat{\Var}(\widehat{S}(t))},
+$$
+em que $\alpha/2$ é o $\alpha/2$-percentil da distribuição normal padrão.
+
+:::
+
+- O intervalo de 95% de confiança para $S(5)$ é \structure{$0,698 \pm 1,96 \sqrt{0,0163} = (0,45; 0,95)$}.
+
+\framebreak
+
+::: {.block}
+
+### IC para $S(t)$: comentários e alternativas
+
+- Este intervalo pode apresentar __limite inferior negativo__ e __limite superior maior que 1__.
+    + $\widehat{U}(t) = \log[-\log \widehat{S}(t)]$
+    + $\widehat{Var}(\widehat{U}(t))=\frac{\sum_{j:t_j<t}\frac{d_j}{n_j(n_j-d_j)}}{[\log\widehat{S}(t)]^2}$
+    + Intervalo aproximado de $100(1-\alpha)$% de confiança para $S(t)$ 
+
+$$
+[\widehat{S}(t)]^{\exp\left\{ \pm z_{\alpha/2} \sqrt{\widehat{Var}(\widehat{U}(t))}\right\}}.
+$$
+
+::: 
+
+# Exemplo computacional
+
+## Estudo de Hepatite {.allowframebreaks}
+
+```{r dados, echo=FALSE, message=FALSE, warning=FALSE}
+
+tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16,
+            16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10,
+            10, 12, 16, 16, 16)
+
+cens <- c(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1,
+          0, 0, 0, 0, 0)
+
+grupo <- factor(c(rep("Controle", 15), rep("Esteroide", 14)))
+
+df.hep <- data.frame(tempo, cens, grupo)
+
+```
+
+
+```{r dados2, echo=TRUE, message=FALSE, warning=FALSE}
+
+# install.packages("survival")
+
+# Carregando pacote
+library(survival)
+
+# Dados do exemplo
+
+head(df.hep)
+
+```
+
+\framebreak
+
+```{r km.plot, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ 1,
+               data = df.hep,
+               subset = grupo == "Esteroide",
+               conf.type = "log-log")
+
+plot(ekm, conf.int = FALSE, 
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+```
+
+\framebreak
+
+\scriptsize
+
+```{r km, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(ekm)
+
+```
+
+\framebreak
+
+\normalsize
+
+__Intervalo de confiança__
+
+```{r km.plot.ic, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+```
+
+\framebreak
+
+__Estratificando por grupos de tratamentos__
+
+\scriptsize
+
+```{r km.grupo, echo=TRUE, message=FALSE, warning=FALSE}
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.hep,
+               conf.type = "log-log")
+
+summary(ekm)
+
+```
+
+\framebreak
+
+\normalsize
+
+```{r km.grupo.plot, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+legend("bottomleft",
+       c("Controle", "Esteroide"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+```
+
+## Para casa
+
+1. Leia o capítulo 2 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulo 4 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+
+## Próxima aula
+
+- Comparação de curvas de sobrevivência.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-ff.jpg'))
+
+```
+

@@ -1,0 +1,293 @@
+---
+title: '`R`, `survival` e `survminer`: breve tutorial para Análise de Sobrevivência'
+author: "Rodrigo Citton P. dos Reis"
+date: "Porto Alegre, 2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+institution: Programa de Pós-Graduação em Epidemiologia - UFRGS
+bibliography: analise-sobrevivencia.bib
+csl: associacao-brasileira-de-normas-tecnicas-ufrgs-initials.csl
+urlcolor: magenta
+vignette: |
+  %\VignetteIndexEntry{Tutorial survival} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+# Introdução
+
+Este tutorial tem como objetivo descrever as principais funções do pacote `survival` [@survival-package], um dos pacotes mais populares em análise de sobrevivência. As principais funcionalidades do pacote `survival` são:
+
+- Organizar dados de sobrevivência na presença de censura.
+- Estimar a função de sobrevivência.
+- Ajustar modelos de regressão para dados de sobrevivência.
+- Gerar saídas numéricas, em tabelas e gráficos.
+
+Com relação a esta última funcionalidade, recentemente, o pacote `survminer` [@survminer] tem auxiliado na geração de gráficos elegantes, ricos em informações e com qualidade para publicações. Assim, sempre que for apropriado, as funções deste pacote também serão apresentadas aqui.
+
+Antes de apresentar exemplos utilizando funções destes pacotes, a instalação do `R` e `RStudio` é brevemente descrita.
+
+# Baixando e instalando o `R`
+
+Para instalação do `R` acesse o site https://www.r-project.org/:
+
+1. Em __Download__ clique em CRAN.
+2. Escolha um repositório de sua preferência, por exemplo, Universidade Federal do Paraná (https://cran-r.c3sl.ufpr.br/).
+3. Em __Download and Install R__ clique no link adequado para o seu sistema operacional (no caso do Windows, clique no link __Download R for Windows__).
+4. Clique no link __base__ (no caso do sistema operacional ser o Windows).
+5. Finalmente clique no link para baixar o arquivo executável (a versão mais atual __Download R 4.1.1 for Windows__).
+
+Após baixar o arquivo executável, abra-o e siga as etapas de instalação conforme as \textcolor{blue}{configurações padrões}.
+
+# Baixando e instalando o `RStudio`
+
+Para instalação do `RStudio` acesse o site https://www.rstudio.com/products/rstudio/download/. Em __Choose Your Version__ clique no botão __Download__ da versão __RStudio Desktop - Open Source License - Free__. Você será direcionado para uma seção do site que contém o botão __DOWNLOAD RSTUDIO FOR WINDOWS__. Clique neste botão para  baixar a versão mais recente do instalador do `RStudio` para Windows (RStudio Desktop 1.4.1717).
+
+Após baixar o arquivo executável, abra-o e siga as etapas de instalação conforme as configurações padrões. É importante salientar que o `R` deve ser instalado antes que o `RStudio`. Além disso, embora, o `RStudio` seja uma excelente interface gráfica para o `R`, com diversas funcionalidades de fácil acesso para o usuário, ele não substitui o `R`. Sem o `R`, o `RStudio` não consegue executar as funções de um programa `R`.
+
+# Instalando e carregando o pacote `survival`
+
+A instalação do pacote `survival` (assim como boa parte dos mais de 18 mil pacotes do `R`) pode ser feita utilizando a função `install.packages`:
+
+```{r, eval=FALSE, echo=TRUE}
+
+install.packages("survival")
+
+```
+
+Os pacotes, assim como `R`, são atualizados de tempos em tempos. As atualizações apresentam implementações de novas métodos, correções de antigos _bugs_ e reorganizam o código do pacote para melhorar o seu desempenho computacional. Assim, é interessante que o usuário reinstale um pacote já instalado para ser contemplado com as atualizações do pacote. A peridicidade recomendada deste processo é seis meses.
+
+Uma vez instalado o pacote, é preciso carregá-lo para que se tenha acessoa às suas funções. Usualmente, a função `library` é utilizada para carregar um pacote:
+
+```{r, eval=TRUE, echo=TRUE}
+
+library(survival)
+
+```
+
+A função `require` também pode ser utilizada para este fim.
+
+```{r, eval=FALSE, echo=TRUE}
+
+require(survival)
+
+```
+
+É importante destacar que não é necessário reinstalar um determinado pacote sempre que uma nova sessão do `R` é iniciada. No entanto, é necessário carregar o pacote sempre que uma nova sessão é iniciada^[A menos que o `R` seja configurado para que ao iniciar já carregue um certo conjunto de pacotes desejados pelo usuário. Este tutorial não apresenta esta possibilidade, mas o usuário interessado neste recurso encontrará facilmente referências para tal.].
+
+Uma boa prática do usuário do `R` é a sistemática e contínua consulta ao manual dos pacotes e funções. A função `help` acessa o manual do pacote ou função especificada:
+
+```{r, eval=FALSE, echo=TRUE}
+
+help(package = "survival")
+
+```
+
+# Organização dos dados de sobrevivência
+
+Os dados de sobrevivência para o indivíduo $i (i = 1,\ldots, n)$ sob estudo, são representados, em geral, pelo par $(t_i, \delta_i)$ sendo $t_i$ o __tempo de falha ou de censura__ e $\delta_i$ a variável indicadora de falha ou censura, isto é,
+
+$$
+\delta_i = \left\{\begin{array}{llll}
+1 & \mbox{se} & t_i & \mbox{é um tempo de falha}\\
+0 & \mbox{se} &t_i & \mbox{é um tempo de censura}.
+\end{array}
+\right.
+$$
+
+Também é bastante comum que os conjuntos de dados contenham informações de covariáveis medidas. Assim, para o $i$-ésimo indivíduo, por exemplo, teríamos $x_i$ representando o vetor de covariáveis ($sexo_i$, $idade_i$, $tratamento_i$). Dessa forma, os dados ficam representados por $(t_i,\delta_i,x_i)$. No caso especial de dados de sobrevivência intervalar tem-se, ainda, a representação $(\ell_i,u_i,\delta_i,x_i)$ em que $\ell_i$ e $u_i$ são, respectivamente, os limites inferior e superior do intervalo observado para o $i$-ésimo indivíduo.
+
+Existem várias formas (funções) para carregar diversos formatos de arquivos de dados no `R`. Uma das mais conhecidas é função `read.table` para carregar dados do tipo texto. O arquivo `ipec.csv` apresenta dados de provenientes de coortes hospitalares de pacientes portadores de HIV, é um conjunto de dados de exemplo apresentado em @sobrevivencia_marilia e pode ser obtido em http://sobrevida.fiocruz.br/aidsclassico.html. É possível baixar o arquivo, e indicar o __caminho completo (diretório + arquivo com extensão)__^[É importante utilizar "/" (ou dupla barra invertidada "\\\\") para separar os diretórios e subdiretórios do arquivo.] para o argumento `file`, ou indicar o próprio endereço _web_ do arquivo.
+
+```{r, eval=TRUE, echo=TRUE}
+
+ipec <- read.table(file = "http://sobrevida.fiocruz.br/dados/ipec.csv",
+                   sep = ";",
+                   header = TRUE)
+
+```
+
+Ao carregar os dados no `R` é recomendado armazená-los em um __objeto__. Neste caso, o objeto criado foi o `ipec` (em referência ao nome do arquivo, mas outros nomes também seriam válidos) e o operador __atribuição__ (`<-`) é responsável por esta ação. Uma vez que os dados foram carregados podemos visualizar o conteúdo do objeto, com a função `View` ou `head`^[O `R` não mantém uma tabela de dados brutos em tela.]:
+
+```{r, eval=TRUE, echo=TRUE}
+
+# View(ipec)
+
+# Retorna as primeiras linhas do objeto
+head(ipec)
+
+```
+
+Algumas outras funções que nos permitem conhecer o objeto criado são: `class`, `summary`, `str`.
+
+```{r, eval=TRUE, echo=TRUE}
+
+# Retorna a classe do objeto
+class(ipec)
+
+# Retorna a estrutura do objeto
+str(ipec)
+
+# Retorna um conjunto de estatística resumo
+summary(ipec)
+
+```
+
+Note que o objeto `ipec` é um objeto do tipo `data.frame` que é uma __coleção de vetores colunas__, em que cada um destes pode ser um vetor de um tipo diferente: `numeric`, `integer`, `factor`, `character`, etc. Ou seja, um objeto do tipo `data.frame` pode ser utilizado para representar uma tabela de dados brutos, em que nas linhas armazenos a informação com respeito ao indivíduo (unidade de observação) e nas colunas armazenos a informação referente às variáveis (que podem ser contínuas, discretas, ordinais ou nominais). No caso do objeto `ipec`, temos 193 observações (indivíduos) e 15 variáveis, sendo que a variável `id` representa o identificador de cada unidade observacional. 
+
+É possível alterar o tipo de uma variável no `data.frame` combinando o operador `<-`, `$`^[O `$` é como o possessivo (em inglês) "'s"; `ipec$idade` é a variável `idade` de `ipec`.] e a função correspondente a nova classe:
+
+```{r, eval=TRUE, echo=TRUE}
+
+# Transforma a variável sexo em uma variável tipo factor
+ipec$sexo <- factor(ipec$sexo)
+
+summary(ipec$sexo)
+summary(ipec$idade)
+table(ipec$status)
+
+```
+
+Estes dados representam uma coorte de 49 mulheres e 144 homens, com idades entre 20 e 68 anos. Durante os quatro anos de estudo, foram registradas 103 censuras e 90 eventos (óbito). Todas as censuras são classificadas como censuras à direita, já que resultam de perda de acompanhamento, seja por abandono ou término do tempo de observação [@sobrevivencia_marilia].
+
+As variáveis `tempo` e `status` representam as variáveis de tempo até o evento e a indicadora de falha ou censura, respectivamente, formando o "desfecho-em-par" $(t_i, \delta_i)$. O início do acompanhamento era definido pelo diagnóstico de Aids e era contado em dias. Este conjunto de dados registrou tempo de início e de fim do acompanhamento, o que permite também a representação do desfecho como $(\ell_i, u_i, \delta_i)$. As demais variáveis podem ser utilizadas nas análises para compor o vetor de covariáveis $x_i = (sexo_i, escola_i, idade_i, \ldots)$.
+
+A representação do desfecho de sobrevivência $(t_i, \delta_i)$ no `R` pode ser feita com a função `Surv` do pacote `survival`:
+
+```{r, eval=TRUE, echo=TRUE}
+
+Surv(time = ipec$tempo, event = ipec$status)
+
+```
+
+Não é necessário armazenar esta "variável" no objeto `data.frame`. Esta função será utilizada em combinação com diversas outras funções do pacote `survival`para representar o desfecho. Outra forma (neste caso) de representar o desfecho é pelo trio "tempo de início - tempo final - indicadora de falha e censura" $(\ell_i, u_i, \delta_i)$:
+
+```{r, eval=TRUE, echo=TRUE}
+
+Surv(time = ipec$ini, time2 = ipec$fim, event = ipec$status)
+
+```
+
+Duas observações merecem ser feitas:
+
+1. Por padrão (_default_), a função `Surv` considera o `Status = 0` como uma __censura__, e `Status = 1` como uma __falha__ (ocorrência do evento). Caso, o conjunto de dados apresentasse uma configuração distinta, poderíamos informar o código referente ao evento na própria função^[Assim não é necessária a formatação prévia do conjunto de dados para esta finalidade.]. Por exemplo, se o óbito fosse codificado com o número `0`, então a função deveria ser especificada da seguinte maneira: `Surv(time = ipec$tempo, event = ipec$status == 0)`; se o óbito fosse codificado pela letra `S`, então a função deveria ser especificada como: `Surv(time = ipec$tempo, event = ipec$status == 'S')`. 
+2. Por padrão, a função `Surv` especifica a censura como sendo uma censura à direita. No caso em que são analisados dados com censura à esquerda ou intervalar, o argumento `type` deve ser configurado apropriadamente (`Surv(tempo, cens, type = "left")` no caso de censjura à esquerda; consulte o `help` da função para mais opções).
+
+# Estimação da curva de sobrevivência
+
+A estimação da função de sobrevivência $S(t) = \Pr(T > t)$ pode ser obtida pela função `survfit` do pacote `survival`. A função `survfit` pode ser utilizada para obtenção da estimativa de diversas funções que caracterizam o tempo até o evento. No caso de um evento simples (um único evento por observação) e censura à direita, as estimativas $\widehat{S}(t)$ para $S(t)$ são geradas pelo estimador de Kaplan-Meier. Para a estimativa da sobrevivência de toda a coorte _IPEC_, podemos especificar a função `survival` da seguinte forma:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+ekm <- survfit(Surv(time = tempo, event = status) ~ 1,
+               data = ipec,
+               conf.type = "log-log")
+
+```
+
+O objeto criado `ekm` armazena a saída (_output_) da função `survival`. Podemos acessar a saída (ou partes desta) com as funções `print`, `summary`^[Veja que função `summary` já foi utilizada para retornar as estatísticas resumo de variáveis de um `data.frame` ou de um vetor, e agora é utilizada para retornar a saída de um objeto tipo `survfit`. Esta função exemplifica que uma função no `R` retorna uma saída de acordo com tipo de objeto de entrada (ou seja, no `R`, os modos e classes de dados definem os atributos fundamentais e o comportamento de um objeto de dados).] e `plot`
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+print(ekm)
+summary(ekm)
+```
+
+Como pode ser visto, a função `summary` apresenta uma tabela com os tempos distintos de falha (`time`), o número de indivíduos em risco em cada respectivo tempo (`n.risk`), o número de eventos no tempo de falha (`n.event`), a sobrevivência estimada pelo Kaplan-Meier naquele tempo (`survival`), o respectivo erro padrão estimado (`std.err`), e os limites inferior (`lower 95% CI`) e superior (`upper 95% CI`) do intervalo de confiança de 95%. Para a obtenção de intervalos com outros níveis de confiança é necessário especificar o argumento `conf.int` na função `survfit` (`conf.int = 0.90` para intervalos de confiança de 90%). A função `plot` desenha o gráfico da sobrevivência estimada pela função `survfit`:
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = FALSE, 
+     lwd = 2, xlab = "Tempo (dias)", 
+     ylab = "Sobrevivência estimada")
+
+```
+
+A mesma função pode nos apresentar diferentes versões do gráfico, quando seus argumentos são especificados para tal:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     lwd = 2, col = "steelblue",
+     xscale = 365.25,
+     xlab = "Tempo (anos)", 
+     ylab = "Sobrevivência estimada")
+
+```
+
+No gráfico acima, as linhas tracejadas representam a banda formada pelos intervalos de confiança (`conf.int = TRUE`), e as pequenas marcas na curva estimada representam os tempos de censura do estudo (`mark.time = TRUE`).
+
+A função `survfit` também pode ser utilizada para estimar a sobrevivência de subgrupos da população de estudo:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ekm <- survfit(Surv(time = tempo, event = status) ~ sexo,
+               data = ipec,
+               conf.type = "log-log")
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Tempo (dias)", 
+     ylab = "Sobrevivência estimada")
+
+legend("bottomleft",
+       c("Feminino", "Masculino"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+
+```
+
+A variável de estrato pode possuir mais que duas categorias:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ipec$idade.cat <- cut(x = ipec$idade,
+                      breaks = c(20, 45, 60, Inf),
+                      include.lowest = T,
+                      labels = c("20-45", "45-60", "60+"))
+
+ekm <- survfit(Surv(time = tempo, event = status) ~ idade.cat,
+               data = ipec,
+               conf.type = "log-log")
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     col = c("black", "red", "blue"), 
+     lwd = 2, xlab = "Tempo (dias)", 
+     ylab = "Sobrevivência estimada")
+
+legend("topright",
+       levels(ipec$idade.cat), 
+       col = c("black", "red", "blue"), 
+       lwd = 2, bty = "n")
+
+```
+
+O pacote `survminer` apresenta uma forma gráfica alternativa (no formato dos gráficos `ggplot`), e ainda possibilita a criação de tabela de indivíduos em risco (muito utilizada nas publicações de estudos de sobrevivência):
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+# install.packages("survminer")
+library(survminer)
+
+ekm <- survfit(Surv(time = tempo, event = status) ~ 1,
+               data = ipec,
+               conf.type = "log-log")
+
+ggsurvplot(ekm,
+           data = ipec,
+           risk.table = TRUE,
+           conf.int = TRUE,
+           xlab = "Tempo (dias)",
+           ylab = "Sobrevivência estimada",
+           palette = "Dark2",
+           legend = "none",
+           ggtheme = theme_bw())
+
+```
+
+# Referências

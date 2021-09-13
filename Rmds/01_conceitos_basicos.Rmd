@@ -1,0 +1,385 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Conceitos básicos"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+# Introdução
+
+## Introdução {.allowframebreaks}
+
+- Em \structure{análise de sobrevivência} a variável resposta é, geralmente, o \structure{tempo até a ocorrência de um evento}\footnote{Também denominado tempo do evento, tempo de falha ou tempo de sobrevivência.} de interesse.
+- De maneira mais geral, esta abrange um conjunto de técnicas estatísticas para a análise de variáveis aleatórias positivas, tais como
+    + tempo até o óbito por determinada causa
+    + tempo de permanência no hospital
+    + tempo de duração de uma greve
+    + tempo até o aprendizado de certa habilidade
+    + medições de carga viral
+    + o valor em reais que uma companhia de seguros paga a um determinado caso
+
+## Introdução {.allowframebreaks}
+
+- Por exemplo, em estudos de câncer, é usual o registro das datas correspondentes ao diagnóstico da doença, à remissão, à recorrência da doença (recidiva) e óbito do paciente.
+    + O tempo de falha pode ser, por exemplo, do diagnostico até o óbito ou da remissão até a recidiva.
+
+\framebreak
+
+- A principal característica de dados de sobrevivência é a presença de \structure{censura}\footnote{Também chamada de observação censurada.}, que é a observação parcial da resposta.
+- Isto se refere a situações em que, por alguma razão, o \structure{acompanhamento} do paciente foi \structure{interrompido};
+    + o participante mudou de cidade;
+    + o estudo terminou para a análise dos dados;
+    + o participante faleceu de causa diferente da estudada.
+
+## Introdução {.allowframebreaks}
+
+- Isto significa que toda informação referente à resposta se resume ao conhecimento de que \structure{o tempo de falha é superior àquele observado}. 
+
+- Desta forma, faz-se necessário o uso dos \structure{métodos de análise de sobrevivência}, que possibilitam incorporar na análise estatística a informação contida nos dados censurados.
+
+# Caracterizando dados de sobrevivência
+
+## Caracterizando dados de sobrevivência {.allowframebreaks}
+
+- Os conjuntos de dados de sobrevivência são caracterizados pelos \structure{tempos de falha} e, muito frequentemente, pelas \structure{censuras}.
+    + Estes dois componentes constituem a \structure{variável resposta (desfecho)}.
+- Em estudos clínicos, um \structure{conjunto de covariáveis} é também, geralmente, medido em cada participante.
+- Os seguintes três elementos constituem o tempo de falha: 
+    + o tempo inicial,
+    + a escala de medida,
+    + o evento de interesse (falha).
+
+## Tempo de falha {.allowframebreaks}
+
+- O \structure{tempo de início} do estudo deve ser precisamente definido.
+    + Em um estudo clínico aleatorizado, a data da aleatorização é a escolha natural para a origem do estudo.
+    + A data do diagnóstico ou do início do tratamento de doenças também são outras escolhas possíveis.
+
+\framebreak
+
+- A \structure{escala de medida} é quase sempre o tempo real ou "de relógio", apesar de existirem alternativas.
+- Em testes de engenharia podem surgir outras escalas de medida, como o número de ciclos, a quilometragem de um carro ou qualquer outra medida de carga.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', out.height='80%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'censoring-example2.png'))
+
+```
+
+\framebreak
+
+- O terceiro elemento é o \structure{evento de interesse}.
+- Estes eventos são, na maioria dos casos, indesejáveis e, como já mencionado, chamados de falha.
+- É importante, em estudos de sobrevivência, definir de forma clara e precisa o que vem a ser a falha. 
+- __Ex:__ o tempo de falha vai do tempo inicial de exposição (chegada ao supermercado) até o produto ficar "inapropriado ao consumo".
+    + Este evento deve ser claramente definido antes de iniciar o estudo.
+    + Por exemplo, o produto fica inapropriado para o consumo quando atingir mais que uma determinada concentração de microrganismos por $mm^2$ de área do produto.
+
+\framebreak
+
+- O evento de interesse (falha) pode ainda ocorrer devido a uma única causa ou devido a duas ou mais.
+- Situações em que causas de falha competem entre si são denominadas na literatura de \structure{riscos competitivos}.
+
+## Censura {.allowframebreaks}
+
+- Os estudos clínicos que envolvem uma resposta temporal são frequentemente prospectivos e de longa duração.
+- Mesmo sendo longos, os estudos clínicos de sobrevivência usualmente terminam antes que todos os indivíduos no estudo venham a falhar.
+- Uma característica decorrente destes estudos é, então, a presença de \structure{observações incompletas} ou \structure{parciais}.
+- Estas observações, denominadas \structure{censuras}, podem ocorrer por uma variedade de razões, dentre elas, a perda de acompanhamento do paciente no decorrer do estudo e a não ocorrência do evento de interesse até o término do experimento.
+
+\framebreak
+
+- Note que toda informação obtida sobre estes indivíduos é que o seu tempo até o evento é \structure{superior ao tempo registrado} até o último acompanhamento.
+- Ressalta-se o fato de que, mesmo censurados, todos os resultados provenientes de um estudo de sobrevivência devem ser usados na análise estatística.
+    + Mesmo sendo incompletas, as observações censuradas nos fornecem informações sobre o tempo de vida de pacientes;
+    + A omissão das censuras no cálculo das estatísticas de interesse pode acarretar em conclusões enviesadas.
+
+\framebreak
+
+- Os estudos apresentam diferentes \structure{mecanismos de censura}.
+- \structure{Censura do tipo I} é aquela em que o estudo será encerrado após um período pré-estabelecido de tempo.
+- \structure{Censura do tipo II} é aquela em que o estudo será encerrado após ter ocorrido o evento de interesse em um número pré-estabelecido de indivíduos.
+- \structure{Censura do tipo aleatório} é o que mais ocorre na prática médica/saúde.
+    + Isto acontece quando um paciente/participante é retirado no decorrer do estudo sem ter ocorrido a falha.
+    + Isto também ocorre, por exemplo, se o paciente/participante falecer por uma razão diferente da estudada.
+
+\framebreak
+
+```{r censura_mecanismo, fig.align='center', out.width='100%', echo=FALSE, message=FALSE, warning=FALSE}
+
+set.seed(2357)
+par(mfrow = c(2, 2))
+
+# ---------------
+# Dados completos
+# ---------------
+i <- 1:5
+t <- rexp(n = 5, rate = 1/10)
+d <- rbinom(n = 5, size = 1, prob = 1)
+plot(i ~ t, pch = 16, xlab = "Tempo", ylab = "Paciente", main = "Dados completos", ylim = c(0,6))
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+
+# ---------------
+# Dados com censura tipo I
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+d <- ifelse(t <= 20, 1, 0)
+t[t >= 20] <- 20
+plot(i ~ t, xlab = "Tempo", ylab = "Paciente", main = "Dados com censura tipo I", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = 20, y0 = 1, x1 = 20, y1 = 5, lty = 4, col = "red")
+
+# ---------------
+# Dados com censura tipo II
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+t.median <- median(t)
+d <- ifelse(t <= t.median, 1, 0)
+t[t >= t.median] <- t.median
+plot(i ~ t, xlab = "Tempo", ylab = "Paciente", main = "Dados com censura tipo II", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = t.median, y0 = 1, x1 = t.median, y1 = 5, lty = 4, col = "red")
+
+# ---------------
+# Dados com censura aleatória
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+d <- ifelse(t <= 20, 1, 0)
+t.min <- min(t)
+d[which(t == t.min)] <- 0
+t[t >= 20] <- 20
+plot(i ~ t, xlab = "Tempo", ylab = "Indivíduo", main = "", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = 20, y0 = 1, x1 = 20, y1 = 5, lty = 4, col = "red")
+
+par(mfrow = c(1, 1))
+
+```
+
+\framebreak
+
+- Uma representação simples do mecanismo de censura aleatória é feita usando duas variáveis aleatórias.
+- Seja \structure{$T$} uma variável aleatória representando o tempo de falha de um indivíduo e seja \structure{$C$} uma variável aleatória independente de \structure{$T$}, representando o tempo de censura associado a este indivíduo.
+- Os dados observados são
+
+$$
+t = \min(T,C)
+$$
+e
+
+$$
+\delta = \left\{\begin{array}{lll}
+1 & \mbox{se} & T\leq C\\
+0 & \mbox{se} & T > C.
+\end{array}
+\right.
+$$
+
+\framebreak
+
+- Ainda temos a seguinte classificação das censuras.
+- \structure{Censura à direita:} o tempo de ocorrência do evento de interesse está à direita do tempo registrado.
+- \structure{Censura à esquerda:} o tempo registrado é maior que o tempo do evento.
+    + __Exemplo:__ um estudo para avaliar o tempo até a alfabetização. No começo do estudo alguns indivíduos já estão alfabetizados e não lembram em que tempo o evento ocorreu.
+- \structure{Censura intervalar:} o evento ocorreu em um intervalo de tempo em que se conhece apenas os limites do intervalo.
+    + __Exemplo:__ um veterinário realiza visitas a cada três meses em casas de uma certa vizinhança para acompanhar a saúde de cães. O evento do interesse é a soroconversão para leishmaniose que ocorre entre as visitas.
+
+\framebreak
+
+- Em nosso curso, a atenção está voltada aos dados de sobrevivência com censura à direita, que é a situação encontrada com mais frequência em estudos epidemiológicos.
+- Desta forma, quando for simplesmente mencionada a palavra \structure{censura} entenda-se \structure{censura à direita}.
+
+# Representação dos dados de sobrevivência
+
+## Representação dos dados de sobrevivência {.allowframebreaks}
+
+- Os dados de sobrevivência para o indivíduo $i (i = 1,\ldots, n)$ sob estudo, são representados, em geral, pelo par $(t_i, \delta_i)$ sendo $t_i$ o __tempo de falha ou de censura__ e $\delta_i$ a variável indicadora de falha ou censura, isto é,
+
+$$
+\delta_i = \left\{\begin{array}{llll}
+1 & \mbox{se} & t_i & \mbox{é um tempo de falha}\\
+0 & \mbox{se} &t_i & \mbox{é um tempo de censura}.
+\end{array}
+\right.
+$$
+
+- Na presença de covariáveis medidas no $i$-ésimo indivíduo tais como $x_i = (sexo_i, idade_i, tratamento_i)$, os dados ficam representados por $(t_i,\delta_i,x_i)$.
+
+- No caso especial de dados de sobrevivência intervalar tem-se, ainda, a representação $(\ell_i,u_i,\delta_i,x_i)$ em que $\ell_i$ e $u_i$ são, respectivamente, os limites inferior e superior do intervalo observado para o $i$-ésimo indivíduo.
+
+# Exemplo
+
+## Estudo de Hepatite {.allowframebreaks}
+
+- Um estudo clínico aleatorizado foi realizado para investigar o efeito da terapia com esteroide no tratamento de hepatite viral aguda.
+- __Vinte e nove pacientes com esta doença__ foram aleatorizados para receber um placebo ou o tratamento com esteroide.
+- Cada paciente foi acompanhado por 16 semanas ou até o óbito (evento de interesse) ou até a perda de acompanhamento.
+
+\framebreak
+
+- Os tempos de sobrevivência observados, em semanas, para os dois grupos são apresentados na tabela a seguir (+ indica censura).
+
+\footnotesize
+
+\begin{table}[]
+\begin{tabular}{ll}
+\hline
+Grupo     & Tempo de sobrevivência em semanas                                \\ \hline
+Controle  & 1+, 2+, 3, 3, 3+, 5+, 5+, 16+, 16+, 16+, 16+, 16+, 16+, 16+, 16+ \\
+Esteroide & 1, 1, 1, 1+, 4+, 5, 7, 8, 10, 10+, 12+, 16+, 16+, 16+            \\ \hline
+\end{tabular}
+\end{table}
+
+# Especificando o tempo de sobrevivência
+
+## Especificando o tempo de sobrevivência
+
+- A variável aleatória não negativa \structure{$T$}, que representa o tempo de falha, é usualmente especificada em análise de sobrevivência pela sua \structure{função de sobrevivência} ou pela \structure{função de taxa de falha (ou risco)}.
+
+## Função de sobrevivência {.allowframebreaks}
+
+- A função de sobrevivência é definida como a \structure{probabilidade de uma observação não falhar até um certo tempo $t$}, ou seja, a __probabilidade de uma observação sobreviver ao tempo__ $t$.
+- Em termos probabilísticos, isto é escrito como
+
+$$
+S(t) = \Pr(T > t).
+$$
+
+- Logo, a função de distribuição de probabilidade pode ser expressa como $F(t) = 1 - S(t)$ (probabilidade de uma observação não sobreviver ao tempo $t$).
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'funcao_sobrevida.png'))
+
+```
+
+## Função de taxa de falha ou de risco {.allowframebreaks}
+
+- A probabilidade da falha ocorrer em um intervalo de tempo \structure{$[t_1,t_2)$} pode ser expressa em termos da função de sobrevivência como
+
+$$
+S(t_1) - S(t_2).
+$$
+
+\framebreak
+
+- A \structure{taxa de falha no intervalo $[t_1,t_2)$} é definida como a probabilidade de que a falha ocorra neste intervalo, dado que não ocorreu antes de $t_1$, dividida pelo comprimento do intervalo.
+- Assim, a taxa de falha no intervalo $[t_1,t_2)$ é expressa por
+
+$$
+\frac{S(t_1) - S(t_2)}{(t_2 - t1)S(t_1)}.
+$$
+
+\framebreak
+
+- De uma forma geral, redefinindo o intervalo como $[t,t+\Delta t)$, a expressão anterior assume a seguinte forma
+
+$$
+\lambda(t) = \frac{S(t) - S(t + \Delta t)}{\Delta tS(t)}.
+$$
+
+\framebreak
+
+- Assumindo $\Delta t$ bem pequeno, \structure{$\lambda(t)$} representa a \structure{taxa de falha instantânea no tempo $t$ condicional à sobrevivência até o tempo $t$}.
+- Observe que as taxas de falha são números positivos, mas sem limite superior.
+- A função de taxa de falha $\lambda(t)$ é bastante útil para descrever a distribuição do tempo de vida de pacientes/participante.
+- Ela descreve a forma em que a taxa instantânea de falha muda com o tempo.
+
+\framebreak
+
+- A função de taxa de falha de $T$ é então definida como
+
+$$
+\lambda(t) = \lim_{\Delta t \to 0}\frac{\Pr(t \leq T < t + \Delta t|T\geq t)}{\Delta t}.
+$$
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'funcao_taxa.png'))
+
+```
+
+## Curva da banheira
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'curva_banheira.png'))
+
+```
+
+## Função de taxa de falha acumulada
+
+- Outra função útil em análise de sobrevivência é a \structure{função de taxa de falha acumulada}.
+- Esta função fornece a taxa de falha acumulada do indivíduo é definida por:
+
+$$
+\Lambda(t) = \int_0^t{\lambda(u)du}.
+$$
+
+## Relações entre as funções {.allowframebreaks}
+
+- Para $T$ uma variável aleatória contínua não negativa, tem-se, em termos das funções definidas anteriormente, algumas relações matemáticas importantes entre elas.
+
+$$
+\lambda(t) = \frac{f(t)}{S(t)} = -\frac{d}{dt}\left\{\log[S(t)]\right\},
+$$
+
+$$
+\Lambda(t) = \int_0^t{\lambda(u)du} = -\log[S(t)],
+$$
+
+$$
+S(t) = \exp\{-\Lambda(t)\} = \exp\left\{-\int_0^t{\lambda(u)du}\right\}.
+$$
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'relacao_funcoes.png'))
+
+```
+
+
+<!-- # Organização dos dados -->
+
+<!-- # Exercício -->
+
+## Para casa
+
+1. Leia o capítulos 1 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulos 1, 2 e 3 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+3. Resolver os exercícios 1 e 2 do Capítulo 2, 1 e 2 do Capítulo 3 do livro __Análise de sobrevivência: teoria e aplicações em saúde__.
+
+## Próxima aula
+
+- Estimação e comparação de curvas de sobrevivência.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-bolha.jpg'))
+
+```
+

@@ -1,0 +1,409 @@
+---
+title: "Estimação e comparação de funções de sobrevivência sem e com covariáveis: características e aplicações"
+subtitle: "Prova Didática"
+author: |
+  | __Candidato:__ Rodrigo Citton Padilha dos Reis
+date: |
+  | Porto Alegre
+  | Abril de 2017
+output:
+  beamer_presentation:
+    theme: "CambridgeUS"
+    colortheme: "seahorse"
+    fonttheme: "structurebold"
+    includes: 
+      in_header: mystyle.tex
+    keep_tex: true
+---
+
+## Análise de sobrevivência
+
+- A \structure{análise de sobrevivência} tipicamente está relacionada a análise de dados de \structure{tempo até o evento}.
+-  De maneira mais geral, esta abrange um conjunto de técnicas estatísticas para a análise de variáveis aleatórias positivas, tais como
+    + tempo até o óbito por determinada causa
+    + tempo de permanência no hospital
+    + tempo de duração de uma greve
+    + tempo até o aprendizado de certa habilidade
+    + medições de carga viral
+    + o valor em reais que uma companhia de seguros paga a um determinado caso
+- Tipicamente, em dados de sobrevivência encontramos a presença de observações \structure{censuradas}.
+
+## Análise de sobrevivência
+
+- A censura é uma observação parcialmente observada.
+    + O tempo até o evento é maior que o tempo observado.
+- \structure{Censura à direita:} o tempo de ocorrência do evento de interesse está à direita do tempo registrado.
+- \structure{Censura à esquerda:} o tempo registrado é maior que o tempo do evento.
+    + __Exemplo:__ um estudo para avaliar o tempo até a alfabetização. No começo do estudo alguns indivíduos já estão alfabetizados e não lembram em que tempo o evento ocorreu.
+- \structure{Censura intervalar:} o evento ocorreu em um intervalo de tempo em que se conhece apenas os limites do intervalo.
+    + __Exemplo:__ um veterinário realiza visitas a cada três meses em casas de uma certa vizinhança para acompanhar a saúde de cães. O evento do interesse é a soroconversão para leishmaniose que ocorre entre as visitas.
+    
+## Análise de sobrevivência
+
+```{r censura_mecanismo, echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(2357)
+par(mfrow = c(2, 2))
+
+# ---------------
+# Dados completos
+# ---------------
+i <- 1:5
+t <- rexp(n = 5, rate = 1/10)
+d <- rbinom(n = 5, size = 1, prob = 1)
+plot(i ~ t, pch = 16, xlab = "Tempo", ylab = "Paciente", main = "Dados completos", ylim = c(0,6))
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+
+# ---------------
+# Dados com censura tipo I
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+d <- ifelse(t <= 20, 1, 0)
+t[t >= 20] <- 20
+plot(i ~ t, xlab = "Tempo", ylab = "Paciente", main = "Dados com censura tipo I", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = 20, y0 = 1, x1 = 20, y1 = 5, lty = 4, col = "red")
+
+# ---------------
+# Dados com censura tipo II
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+t.median <- median(t)
+d <- ifelse(t <= t.median, 1, 0)
+t[t >= t.median] <- t.median
+plot(i ~ t, xlab = "Tempo", ylab = "Paciente", main = "Dados com censura tipo II", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = t.median, y0 = 1, x1 = t.median, y1 = 5, lty = 4, col = "red")
+
+# ---------------
+# Dados com censura aleatória
+# ---------------
+t <- rexp(n = 5, rate = 1/25)
+d <- ifelse(t <= 20, 1, 0)
+t.min <- min(t)
+d[which(t == t.min)] <- 0
+t[t >= 20] <- 20
+plot(i ~ t, xlab = "Tempo", ylab = "Indivíduo", main = "", ylim = c(0,6))
+points(i[d == 1] ~ t[d == 1], pch = 16)
+segments(x0 = 0, y0 = i, x1 = t, y1 = i, lty = 2)
+segments(x0 = 20, y0 = 1, x1 = 20, y1 = 5, lty = 4, col = "red")
+
+par(mfrow = c(1, 1))
+```
+
+## A função de sobrevivência
+
+Estaremos interessados em estimar certas características associadas com a variável aleatória tempo até o evento, denominada por $T$, como por exemplo
+
+- a função \structure{sobrevivência} $S(t)=\Pr(T\geq t)$.
+    + A função de sobrevivência é a probabilidade de um indivíduo sobreviver pelo menos ao tempo $t$.
+    
+## A função de sobrevivência
+
+```{r funcao_sobrevivencia, echo=FALSE, message=FALSE, warning=FALSE}
+# ------------------------
+# Taxa de falha acumulada
+# ------------------------
+Lambda <- function(t,a,b){
+  (t/a)^(b)
+}
+t <- seq(0.01, 30, length = 100)
+plot(t, exp(- Lambda(t, a = 10, b = 2)), main = NULL, xlab = "t", ylab = "S(t)", type = "l", lwd = 2, col = "black", lty = 1)
+lines(t, exp(- Lambda(t,a = 10, b = 1)), lwd = 2, col = "red", lty = 2)
+lines(t, exp(- Lambda(t,a = 10, b = 0.5)), lwd = 2, col = "blue", lty = 4)
+```
+
+## Exemplo: pacientes com câncer de cabeça e pescoço\footnote{Nothern California Oncology Group. {\bf Fonte:} Efron, B., Hastie, T., \textit{Computer age of statistical inference}, Cambridge, 2016.}
+
+- Ensaio clínico comparando dois tratamentos para o câncer de cabeça e pescoço:
+    + Quimioterapia ($n=51$);
+    + Quimio + Radioterapia ($n=45$).
+- Evento de interesse: óbito.
+    + Resposta de cada paciente é o tempo de sobrevivência.
+    + O sinal de $+$ representa uma observação censurada.
+
+## Exemplo: pacientes com câncer de cabeça e pescoço
+
+```{r carrega_dados, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+dados <- read.table("C:\\Users\\Rodrigo\\Dropbox\\ufrgs\\ProvaDidatica\\dados\\ncog.txt", head = T)
+dados$t.tab <- ifelse(dados$d == 0, paste(dados$t, "+", sep = ""), paste(dados$t, "", sep = ""))
+dados.a <- dados[dados$arm == "A",]
+dados.a <- dados.a[order(dados.a$t),]
+dados.b <- dados[dados$arm == "B",]
+dados.b <- dados.b[order(dados.b$t),]
+arm.a <- dados.a$t.tab[dados.a$arm == "A"]
+arm.b <- dados.b$t.tab[dados.b$arm == "B"]
+library(xtable)
+tab.a <- xtable(matrix(c(arm.a, "", "", ""), ncol = 9, byrow = T), caption = "Quimioterapia")
+tab.b <- xtable(matrix(c(arm.b), ncol = 9, byrow = T), caption = "Quimio + Radioterapia")
+print(tab.a, include.rownames = FALSE, include.colnames = FALSE, comment = FALSE, size = "scriptsize", caption.placement = "top")
+print(tab.b, include.rownames = FALSE, include.colnames = FALSE, comment = FALSE, size = "scriptsize", caption.placement = "top")
+```
+
+## Estimação da função de sobrevivência
+
+- Na ausência de censuras:
+    + $\hat{S}_n(t)=\frac{1}{n}\sum_{i=1}^n{I(T_i\geq t)}$.
+    + Teste $t$ (ou Wilcoxon) para comparar os dois tratamentos.
+- Na presença de censuras:
+    + O estimador de \structure{Kaplan-Meier} fornece uma comparação gráfica que de maneira apropriada leva em conta as observações censuradas.
+
+## Estimador de Kaplan-Meier\footnote{Kaplan, E. L., Meier, P., Nonparanietric estimation from incomplete observations. \textit{JASA} {\bf 53}: 457-81, 1958. {\bf Fonte:} \textit{Current Contents}.}
+
+\begin{columns}[c]
+\column{1in}
+\includegraphics[width=0.9\columnwidth]{Figuras/kaplan}
+\column{1in}
+\includegraphics[width=0.9\columnwidth]{Figuras/meier}
+\column{3in}
+{\scriptsize
+\begin{itemize}
+\item O artigo de Kaplan e Meier começa em 1952 quando Paul Meier, então na \emph{Johns Hopkins University}, encontrou o artigo de Greenwood na duração do câncer.
+\item Um ano após, no \emph{Bell Laboratories}, Kaplan se interessou tempos de vida de componentes da rede de telefones.
+\end{itemize}
+}
+\end{columns}
+
+
+\begin{itemize}
+{\scriptsize
+\item Kaplan e Meier trabalharam independentemente e submeteram seus respectivos trabalhos para o \emph{Journal of American Statistical Association}.
+\item O JASA os encorajou a submeterem um trabalho conjunto.
+\item Kaplan and Meier levaram mais 4 anos para resolverem diferenças em suas abordagens e publicaram um método que se tornou a abordagem não paramétrica padrão na análise de tempos de vida com observações censurdas.
+}
+\end{itemize}
+
+## Estimador de Kaplan-Meier
+
+- Ideia intuitiva do estimador: reescrever $S(t)$ em termos de probabilidades condicionais. Seja $t_0 < t_1$, então
+$$
+S(t_1) = \Pr(T\geq t_0)\Pr(T\geq t_1|T\geq t_0).
+$$
+
+- Se considerermos uma amostra de tamanho $n$ e $k$ falhas distintas ($k\leq n$) $t_1 < t_2 < \ldots < t_k$, podemos reescrever $S(t)$ para qualquer $t_j$ observado:
+$$
+S(t_j) = (1 - q_1)(1 - q_2)\ldots(1 - q_j),
+$$
+
+em que $q_j = \Pr(T\in [t_{j-1}, t_j)|T \geq t_{j-1}])$.
+
+- O estimador de Kaplan-Meier estima estas probabilidades por
+$$
+\hat{q}_j=\frac{\mbox{nº de falhas em } t_j}{\mbox{nº de observações sob risco em } t_{j}-}, j = 1,\ldots,k.
+$$
+
+## Estimador de Kaplan-Meier
+
+- Formulação equivalente
+    + $t_1 < t_2 < \ldots < t_k$ são $k$ tempos distintos de falha
+    + $d_j$ é o número de falhas em $t_j$, $j = 1, 2, \ldots, k$
+    + $n_j$ é o número de observações sob risco em $t_j$ (não falharam e nem censuraram até o instante imediatamente anterior a $t_j$)
+$$
+\hat{S}(t) = \prod_{j:t_j<t}{\left(\frac{n_j - d_j}{n_j}\right)} = \prod_{j:t_j<t}{\left(1 - \frac{d_j}{n_j}\right)}.
+$$
+
+- O estimador de Kaplan-Meier é
+    + uma função do tempo tipo escada
+    + não muda entre tempos de eventos
+    + não muda em tempos de censura
+    
+## Exercício
+
+Complete a tabela a seguir:
+
+\begin{table}[ht]
+\centering
+\begingroup\footnotesize
+\begin{tabular}{ccccc}
+  \hline
+$t_j$ & Intervalos & $d_j$ & $n_j$ & $\hat{S}(t_j)$\\
+  \hline
+0& $[0,7)$ & 0&51&\\
+7& $[7,34)$& 1&51&\\
+34& $[34,42)$&1&50&\\
+42& $[42,63)$&1&49&\\
+63& $[63,64)$&1&48&\\
+64& $[64,83)$&1&47&\\
+83& $[83,84)$&1&45&\\
+   \hline
+\end{tabular}
+\endgroup
+\end{table}
+
+## Exercício
+
+\begin{table}[ht]
+\centering
+\begingroup\footnotesize
+\begin{tabular}{ccccc}
+  \hline
+$t_j$ & Intervalos & $d_j$ & $n_j$ & $\hat{S}(t_j)$\\
+  \hline
+0& $[0,7)$ & 0&51&$(51-0)/51 = 1$\\
+7& $[7,34)$& 1&51&$1\times((51-1)/51) = 0,98$\\
+34& $[34,42)$&1&50&$0,98\times((50-1)/50) = 0,96$\\
+42& $[42,63)$&1&49&$0,96\times((49-1)/49) = 0,94$\\
+63& $[63,64)$&1&48&$0,94\times((48-1)/48) = 0,92$\\
+64& $[64,83)$&1&47&$0,92\times((47-1)/47) = 0,90$\\
+83& $[83,84)$&1&45&$0,90\times((45-1)/45) = 0,88$\\
+   \hline
+\end{tabular}
+\endgroup
+\end{table}
+
+## Código R {.allowframebreaks}
+
+```{r km, echo=TRUE, message=FALSE, warning=FALSE}
+library(survival)
+
+head(dados)
+
+ekm <- survfit(Surv(time = t, event = d) ~ arm,
+               data = dados)
+
+plot(ekm, conf.int = F, 
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Dias", 
+     ylab = "Sobrevivência")
+legend("topright",
+       c("Quimio", "Quimio + Radio"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+```
+
+## Variância de $\hat{S}(t)$
+
+- Para estimar a variância de $\hat{S}(t)$, considere $\hat{p}_j = 1 - \hat{q}_j = 1 - \frac{d_j}{n_j}$, então
+
+$$
+\log\hat{S}(t) = \sum_{j:t_j<t}{\log \hat{p}_j}
+$$
+
+- Assumindo $n_j\hat{p}_j\sim {\rm Binomial}(n_j, p_j)$, o \structure{método delta} implica
+
+\begin{eqnarray*}
+Var(\log \hat{p}_j) &\approx& Var(\hat{p}_j)\left(\frac{d}{dp_j}(\log p_j)\right)^2\\
+&\approx& \frac{p_jq_j}{n_j}\times\frac{1}{p_j^2}=\frac{q_j}{n_jp_j}.
+\end{eqnarray*}
+
+## Variância de $\hat{S}(t)$
+
+- Assumindo independência entre $\log \hat{p}_1,\ldots, \log \hat{p}_k$,
+
+$$
+Var[\log\hat{S}(t)] \approx \sum_{j:t_j<t}{\frac{q_j}{n_jp_j}},
+$$
+$$
+\hat{Var}[\log\hat{S}(t)] \approx  \sum_{j:t_j<t}{\frac{\hat{q}_j}{n_j\hat{p}_j}} = \sum_{j:t_j<t}{\frac{d_j}{n_j(n_j - d_j)}}.
+$$
+
+- Utilizando novamente o método delta,
+
+$$
+\hat{Var}[\hat{S}(t)] = [\hat{S}(t)]^2\sum_{j:t_j<t}{\frac{d_j}{n_j(n_j - d_j)}},
+$$
+
+que é conhecida como a \structure{fórmula de Greenwood}.
+
+## Intervalo de confiança
+
+- Um intervalo de $100(1-\alpha)$% de confiança para $S(t)$ é dado por
+
+$$
+\hat{S}(t) \pm z_{\alpha/2} \sqrt{\hat{Var}(\hat{S}(t))},
+$$
+em que $\alpha/2$ é o $\alpha/2$-percentil da distribuição normal padrão.
+
+- Este intervalo pode apresentar limite inferior negativo e limite superior maior que 1.
+    + $\hat{U}(t) = \log[-\log \hat{S}(t)]$
+    + $\hat{Var}(\hat{U}(t))=\frac{\sum_{j:t_j<t}\frac{d_j}{n_j(n_j-d_j)}}{[\log\hat{S}(t)]^2}$
+    + Intervalo aproximado de $100(1-\alpha)$% de confiança para $S(t)$ 
+
+$$
+[\hat{S}(t)]^{\exp\{ \pm z_{\alpha/2} \sqrt{\hat{Var}(\hat{U}(t))}\}}.
+$$
+
+## Código R {.allowframebreaks}
+
+```{r km_ic, echo=TRUE, message=FALSE, warning=FALSE}
+ekm <- survfit(Surv(time = t, event = d) ~ arm,
+               data = dados,
+               conf.type = "log-log")
+
+plot(ekm, conf.int = TRUE, 
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Dias", 
+     ylab = "Sobrevivência")
+legend("topright",
+       c("Quimio", "Quimio + Radio"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+```
+
+
+## Comparação de funções de sobrevivência
+
+- \structure{Pergunta:} as funções de sobrevivência do grupo Quimioterapia e Quimio + Radioterapia diferem?
+
+- Em outras palavras, como podemos testar $S_1(t) = S_2(t)$.
+    + Os intervalos de confiança construídos anteriormente são pontuais.
+- O teste de \emph{log-rank} pode responder esta questão adequadamente.
+
+## Teste log-rank
+
+- Sejam $t_1< t_2 < \ldots < t_k$ os tempos de falha distintos da amostra formada pela combinação das duas amostras individuais.
+- Suponha que no tempo $t_j$ acontecem $d_j$ falhas e $n_j$ indivíduos estão sob risco em um tempo imediatamente inferior a $t_j$ na amostra combinada
+    + $d_{ij}$ e $n_{ij}$ na amostra $i$ com  $i = 1, 2$ e $j = 1, \ldots, k$.
+    
+\begin{table}[ht]
+\centering
+\begingroup\footnotesize
+\begin{tabular}{r|cc|l}
+&\multicolumn{2}{|c|}{Grupos}&\\
+&1&2&\\
+\hline
+Falha&$d_{1j}$&$d_{2j}$&$d_{j}$\\
+Não falha&$n_{1j} - d_{1j}$&$n_{2j} - d_{2j}$&$n_{j} - d_{j}$\\
+\hline
+&$n_{1j}$&$n_{2j}$&$n_{j}$
+\end{tabular}
+\endgroup
+\end{table}
+
+## Teste log-rank
+
+- Condicional à experiência de falha e censura até o tempo $t_j$ (fixando as marginais da coluna) e ao número de falhas no tempo $t_j$ (fixando as marginais de linha), a distribuição de $d_{2j}$ é é uma \structure{hipergeométrica}.
+    + A média de $d_{2j}$ é $w_{2j} = n_{2j}d_jn_j^{-1}$
+    + A variância de $d_{2j}$ é $(V_j)_2=n_{2j}(n_j-n_{2j})d_j(n_j-d_j)n_j^{-2}(n_j-1)^-1$
+
+
+## Teste log-rank
+
+- A estatística $d_{2j}-w_{2j}$ tem média zero e variância $(V_j)_2$.
+- Se as $k$ tabelas de contingência forem independentes, um teste aproximado
+para a igualdade das duas funções de sobrevivência pode ser
+baseado na estatística
+
+$$
+T = \frac{[\sum_{j=1}^k{(d_{2j}-w_{2j})}]^2}{\sum_{j=1}^k{(V_j)_2}}
+$$
+que, sob a hipótese nula $H_0:S_1(t)=S_2(t)$ para todo o $t$, tem uma distribuição \structure{qui-quadrado} com 1 grau de liberdade para grandes amostras.
+
+## Código R
+
+```{r logrank, echo=TRUE, message=FALSE, warning=FALSE}
+survdiff(Surv(time = t, event = d) ~ arm,
+         data = dados)
+```
+
+## Comentários finais
+
+- Discutimos o problema da estimação da função de sobrevivência.
+    + O estimador de Kaplan-Meier foi apresentado e suas propriedades foram discutidas.
+    + Outro estimador para a função de sobrevivência é o estimador de Nelson-Aalen.
+- Discutimos a questão da comparação de duas funções de sobrevivência.
+    + O teste \emph{log-rank} foi apresentado.
+    + O teste \emph{log-rank} pode ser generalizado para o caso da comparação de mais de duas funções de sobrevivência.
+- Códigos em `R` foram apresentados para a estimação e comparação de funções de sobrevivência.
+
