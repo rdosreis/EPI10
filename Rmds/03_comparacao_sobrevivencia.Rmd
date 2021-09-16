@@ -1,0 +1,530 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Comparação de funções de sobrevivência"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+# Relembrando
+
+## Estudo de Hepatite {.allowframebreaks}
+
+- Um estudo clínico aleatorizado foi realizado para investigar o efeito da terapia com esteroide no tratamento de hepatite viral aguda.
+- __Vinte e nove pacientes com esta doença__ foram aleatorizados para receber um placebo ou o tratamento com esteroide.
+- Cada paciente foi acompanhado por 16 semanas ou até o óbito (evento de interesse) ou até a perda de acompanhamento.
+
+\framebreak
+
+- Os tempos de sobrevivência observados, em semanas, para os dois grupos são apresentados na tabela a seguir (+ indica censura).
+
+\footnotesize
+
+\begin{table}[]
+\begin{tabular}{ll}
+\hline
+Grupo     & Tempo de sobrevivência em semanas                                \\ \hline
+Controle  & 1+, 2+, 3, 3, 3+, 5+, 5+, 16+, 16+, 16+, 16+, 16+, 16+, 16+, 16+ \\
+Esteroide & 1, 1, 1, 1+, 4+, 5, 7, 8, 10, 10+, 12+, 16+, 16+, 16+            \\ \hline
+\end{tabular}
+\end{table}
+
+\framebreak
+
+```{r dados, echo=FALSE, message=FALSE, warning=FALSE}
+
+tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16,
+            16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10,
+            10, 12, 16, 16, 16)
+
+cens <- c(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1,
+          0, 0, 0, 0, 0)
+
+grupo <- factor(c(rep("Controle", 15), rep("Esteroide", 14)))
+
+df.hep <- data.frame(tempo, cens, grupo)
+
+# install.packages("survival")
+
+# Carregando pacote
+library(survival)
+
+# Dados do exemplo
+
+# head(df.hep)
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.hep,
+               conf.type = "log-log")
+
+```
+
+```{r km.grupo, echo=FALSE, message=FALSE, warning=FALSE}
+
+ekm
+
+```
+
+\framebreak
+
+\normalsize
+
+```{r km.grupo.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+legend("bottomleft",
+       c("Controle", "Esteroide"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+### Considerações
+
+- Aparentemente, o grupo Esteroide apresenta uma sobrevivência menor que o grupo Controle.
+    + O \structure{tempo mediano de sobrevivência} para o grupo Esteroide é estimado em 10 semanas; para o grupo Controle, o tempo mediano de sobrevivência é maior que 16 semanas (último tempo de acompanhamento).
+    +  A probabilidade de um indivíduo do grupo Esteroide sobreviver a 12 semanas é estimada em 0,437   (IC 95% 0,164-0,683); no grupo Controle, esta probabilidade é estimada em 0,846 (IC 95% 0,512-0,959).
+    + As curvas de sobrevivência dos dois grupos não atingem o valor zero; isto sempre ocorre quando o maior tempo observado na amostra é uma censura.
+
+# Comparação de funções de sobrevivência
+
+## Comparação de funções de sobrevivência
+
+- \structure{Pergunta:} as funções de sobrevivência do grupo Controle e Esteroide diferem?
+
+- Em outras palavras, como podemos testar \structure{$S_1(t) = S_2(t)$}.
+    + Os intervalos de confiança construídos anteriormente {são pontuais}. Ou seja, para cada ponto $t$ temos um intervalo de $100(1- \alpha)\%$ confiança para $S(t)$. Mas, este coeficiente de confiança não é garantido quando olhamos para a "curva toda".
+- O teste de \structure{\emph{log-rank}}\footnote{Mantel N. Evaluation of survival data and two new rank order statistics arising in its consideration. \emph{Cancer Chemotherapy Reports}. 1966 Mar;50(3):163-70.} pode responder esta questão adequadamente.
+
+## Teste log-rank {.allowframebreaks}
+
+- Sejam \structure{$t_1< t_2 < \ldots < t_k$} os tempos de falha distintos da amostra formada pela combinação das duas amostras individuais (ou seja, os tempos de ocorrência dos eventos dos dois grupos combinados).
+- Suponha que no tempo \structure{$t_j$} acontecem \structure{$d_j = d_{1j} + d_{2j}$} eventos e \structure{$n_j = n_{1j} + n_{2j}$} indivíduos estão sob risco em um tempo imediatamente inferior a \structure{$t_j$} na amostra combinada, em que \structure{$d_{ij}$} e \structure{$n_{ij}$} são o número de eventos e indivíduos em risco, respectivamente, na amostra $i$, para $i = 1, 2$ \structure{(1: Controle e 2: Esteroide, por exemplo)} e $j = 1, \ldots, k$.
+
+\framebreak
+
+- Em \structure{cada tempo de ocorrência do evento $t_j$}, os dados podem ser organizados em uma tabela de contingência $2\times 2$ com $d_{ij}$ eventos e $n_{ij} - d_{ij}$ não eventos na \structure{coluna $i$}
+
+\begin{table}[ht]
+\centering
+\begingroup
+\begin{tabular}{c|cc|c}
+ & \multicolumn{2}{c|}{Grupo} & \\
+ & 1 & 2 & \\
+\hline
+Evento & $d_{1j}$ & $d_{2j}$ & $d_{j}$ \\
+Não evento & $n_{1j} - d_{1j}$ & $n_{2j} - d_{2j}$ & $n_{j} - d_{j}$ \\
+\hline
+ & $n_{1j}$ & $n_{2j}$ & $n_{j}$
+\end{tabular}
+\endgroup
+\end{table}
+
+\framebreak
+
+- Da mesma forma que na análise de muitas tabelas $2 \times 2$, os indivíduos em risco são classificados nessas tabelas para responder à pergunta: 
+    + \structure{o fator de risco (grupo de tratamento, ou exeposição) está associado à sobrevivência?}
+- Para tratar de forma eficaz esta questão com uma única medida de associação, a medida escolhida deve ser constante com respeito ao tempo de sobrevivência.
+- Para criar um único resumo abrangente, os dados são estratificados pelo tempo de ocorrência do evento.
+- Uma medida de risco não é influenciada pelo tempo de sobrevivência quando é calculada \structure{dentro de cada estrato} (tabela) e combinada em todos os estratos para resumir a associação entre o fator de risco e o desfecho.
+
+\framebreak
+
+- Retomando o exemplo do \structure{estudo de hepatite}, o tempo do óbito \structure{$t_1 = 1$}, gera a primeira tabela $2 \times 2$, em que
+
+\begin{table}[ht]
+\centering
+\begingroup
+\begin{tabular}{c|cc|c}
+ & \multicolumn{2}{c|}{Grupo} & \\
+ & Controle & Esteroide & \\
+\hline
+Óbito & $0$ & $3$ & $3$ \\
+Sobreviveu & $15$ & $11$ & $26$ \\
+\hline
+ & $15$ & $14$ & $29$
+\end{tabular}
+\endgroup
+\end{table}
+
+\framebreak
+
+- Note que, condicional à experiência de falha e censura até o tempo $t_j$ (fixando as marginais da coluna) e ao número de eventos no tempo $t_j$ (fixando as marginais de linha), o valor observado $d_{2j}$ é então, sob \structure{$H_0$ (as variáveis Grupo e Desfecho são independentes)}, a realização de uma variável aleatória \structure{hipergeométrica}, $D_{2j}$, com distribuição de probabilidade
+
+$$
+\Pr(D_{2j} = d_{2j}|H_0) = \frac{{n_{1j} \choose d_{1j}}{n_{2j} \choose d_{2j}}}{{n_j \choose d_j}},\ \max(0, d_j - n_{1j}) \leq d_{2j} \leq min(d_j, n_{2j}).
+$$
+
+\framebreak
+
+- Sob \structure{$H_0$}, é possível mostrar que a \structure{média} e a \structure{variância} de \structure{$D_{2j}$} são, respectivamente
+
+$$
+\overline{D}_{2j} = \frac{d_j\times n_{2j}}{n_j}\quad\mbox{e}\quad V(D_{2j}) = \frac{n_{1j}\times n_{2j}\times d_j\times (n_{j} - d_j)}{n_j^2(n_j - 1)}.
+$$
+
+- O valor \structure{$\overline{D}_{2j}$} pode ser visto como o \structure{número esperado de eventos no grupo tratamento} (ou exposto), sob a hipótese nula de independência entre tratamento e desfecho, em \structure{$t_j$}.
+
+\framebreak
+
+- Uma estatística de teste poderia considerar a comparação entre o número observado e esperado de eventos.
+- Um teste para grandes amostras de $H_0$ (as variáveis Grupo e Desfecho são independentes) envolve a estatística
+
+$$
+Z = \frac{d_{2j} - \overline{D}_{2j}}{\sqrt{V(D_{2j})}} \stackrel{a}\sim N(0,1),
+$$
+ou, equivalentemente,
+
+$$
+\chi^2 = Z^2 = \frac{(d_{2j} - \overline{D}_{2j})^2}{V(D_{2j})} \stackrel{a}\sim \chi^2(1).
+$$
+
+- Esta estatística \structure{$\chi^2$} é conhecido como a \structure{estatística qui-quadro de Mantel-Haenszel}\footnote{Mantel N., Haenszel W. Statistical aspects of the analysis of data from retrospective studies of disease. \emph{J Natl Cancer Inst}. 1959 Apr;22(4):719-48.}.
+
+## Teste log-rank {.allowframebreaks}
+
+Lembrando
+
+```{r chi-dist, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='70%', purl=FALSE}
+
+curve(dchisq(x, df = 1),
+      from = 0, to = 8,
+      ylim = c(0, 0.75),
+      lwd = 2,
+      # col = "steelblue",
+      xlab = expression(chi^2),
+      ylab = "Densidade",
+      main = "Dist. qui-quadrado com um grau de liberdade")
+
+#create vector of x values
+x_vector <- seq(qchisq(p = 0.95, df = 1), 8)
+
+#create vector of chi-square density values
+p_vector <- dchisq(x_vector, df = 1)
+
+#fill in portion of the density plot from 0 to 40
+polygon(c(x_vector, rev(x_vector)),
+        c(p_vector, rep(0, length(p_vector))),
+        col = adjustcolor('red', alpha = 0.3),
+        border = NA)
+
+legend("topright", 
+       legend = expression(alpha == 0.05),
+       fill = adjustcolor('red', alpha = 0.3),
+       bty = "n", border = "white")
+
+axis(1, at = 3.84, labels = 3.84, col.axis = "red", cex.axis = 0.75)
+
+```
+
+- Tabelas e _softwares_ podem ser utilizados para avaliação da estatística de teste.
+
+\framebreak
+
+Retornando ao exemplo do \structure{estudo de hepatite} no tempo do óbito \structure{$t_1$}, temos
+
+- Número observado de óbitos no grupo Esteroide: \structure{$d_{21} = 3$};
+- Número esperado de óbitos no grupo Esteroide (sob $H_0$): \structure{$\frac{d_1\times n_{21}}{n_1} = (3\times 14)/29 \approx 1.45$}.
+
+\framebreak
+
+- O tempo do óbito \structure{$t_2 = 3$}, gera uma segunda tabela $2 \times 2$, em que
+
+\begin{table}[ht]
+\centering
+\begingroup
+\begin{tabular}{c|cc|c}
+ & \multicolumn{2}{c|}{Grupo} & \\
+ & Controle & Esteroide & \\
+\hline
+Óbito & $2$ & $0$ & $3$ \\
+Sobreviveu & $11$ & $10$ & $26$ \\
+\hline
+ & $13$ & $10$ & $23$
+\end{tabular}
+\endgroup
+\end{table}
+
+- Número observado de óbitos no grupo Esteroide: \structure{$d_{22} = 0$};
+- Número esperado de óbitos no grupo Esteroide (sob $H_0$): \structure{$\frac{d_2\times n_{22}}{n_2} = (2\times 10)/23 \approx 0.87$}.
+
+\framebreak
+
+Considerando os $k$ tempos distintos de falha, poderíamos organizar os dados referentes as $k$ tabelas $2 \times 2$ na seguinte tabela
+
+\begin{table}[]
+\begin{tabular}{cccccccccc}
+\hline
+$t_j$ & $n_j$ & $d_j$ & $n_{1j}$ & $d_{1j}$ & $n_{2j}$ & $d_{2j}$ & $\overline{D}_{2j}$ & $d_{2j} - \overline{D}_{2j}$ & $V(D_{2j})$ \\ \hline
+1     & 29    & 3     & 15       & 0        & 14       & 3        & 1,448               & 1,552                        & 0,696       \\
+3     & 23    & 2     & 13       & 2        & 10       & 0        & 0,870               & -0,870                       & 0,469       \\
+5     & 19    & 1     & 10       & 0        & 9        & 1        & 0,474               & 0,526                        & 0,249       \\
+7     & 16    & 1     & 8        & 0        & 8        & 1        & 0,500               & 0,500                        & 0,250       \\
+8     & 15    & 1     & 8        & 0        & 7        & 1        & 0,467               & 0,533                        & 0,249       \\
+10    & 14    & 1     & 8        & 0        & 6        & 1        & 0,429               & 0,571                        & 0,245       \\ \hline
+Total & -     & 9     & -        & 2        & -        & 7        & 4,187               & 2,813                        & 2,158      \\ \hline
+\end{tabular}
+\end{table}
+
+\normalsize
+
+## Teste log-rank
+
+### Teste log-rank
+
+- Se as $k$ tabelas de contingência forem independentes, um teste aproximado para a igualdade das duas funções de sobrevivência pode ser baseado na estatística
+
+$$
+\chi^2_{LR} = \frac{[\sum_{j=1}^k{(d_{2j}-\overline{D}_{2j})}]^2}{\sum_{j=1}^k{V(D_{2j})}}
+$$
+
+- Sob a hipótese nula \structure{$H_0:S_1(t)=S_2(t)$ para todo o $t$}, em grandes amostras, tem uma \structure{distribuição aproximada qui-quadrado com 1 grau de liberdade}.
+
+## Teste log-rank
+
+- Em nosso exemplo, \structure{$\chi^2_{LR} = (2,813)^2/2,158 \approx 3,67$}.
+
+```{r chi-dist2, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='70%', purl=FALSE}
+
+curve(dchisq(x, df = 1),
+      from = 0, to = 8,
+      ylim = c(0, 0.75),
+      lwd = 2,
+      # col = "steelblue",
+      xlab = expression(chi^2),
+      ylab = "Densidade",
+      main = "Dist. qui-quadrado com um grau de liberdade")
+
+#create vector of x values
+x_vector <- seq(qchisq(p = 0.95, df = 1), 8)
+
+#create vector of chi-square density values
+p_vector <- dchisq(x_vector, df = 1)
+
+#fill in portion of the density plot from 0 to 40
+polygon(c(x_vector, rev(x_vector)),
+        c(p_vector, rep(0, length(p_vector))),
+        col = adjustcolor('red', alpha = 0.3),
+        border = NA)
+
+legend("topright", 
+       legend = expression(alpha == 0.05),
+       fill = adjustcolor('red', alpha = 0.3),
+       bty = "n", border = "white")
+
+axis(1, at = 3.67, labels = 3.67, col.axis = "blue", cex.axis = 0.75)
+
+```
+
+- O valor desta estatística corresponde ao valor \structure{$p = \Pr(\chi^2_{LR} \geq 3,67) \approx 0,0555$}.
+
+## Código R
+
+\footnotesize
+
+```{r logrank, echo=TRUE, message=FALSE, warning=FALSE}
+
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.hep)
+
+```
+
+\normalsize
+
+- Ao nível de 5% de significância não há evidências contra $H_0$. 
+    + Portanto, as curvas de sobrevivência dos grupos Controle e Esteroide podem ser iguais.
+
+## Teste log-rank
+
+- A generalização do teste \structure{log-rank} avaliar a hipótese de igualdade entre \structure{$S_1(t), S_2(t), \ldots, S_r(t)$}, \structure{$r > 2$}.
+    + O desenvolvimento não será demonstrado, mas salienta-se que esta estatística de teste \structure{log-rank} generalizado para \structure{$r$} funções tem \structure{distribuição aproximada qui-quadrado com $r - 1$ graus de liberdade}.
+- Neste caso, se $H_0$ é rejeitada, concluímos que pelo menos um grupo difere dos demais em relação à função de sobrevivência.
+- Para identificarmos quais grupos diferem uns dos outrous, uma possibilidade é realizar comparações dos grupos, \structure{dois a dois}, por meio do teste de \structure{log-rank} para dois grupos.
+    + O \structure{método de Bonferroni} ($\alpha/[\mbox{número de comparações múltiplas}]$) pode ser utilizado para controlar as taxas de erro tipo I.
+
+# Exemplo
+
+## Estudo de Malária {.allowframebreaks}
+
+- Um estudo experimental realizado com camundongos para verificar a eficácia da imunização pela malária foi conduzido no Centro de Pesquisas Renee Rachou, Fiocruz, Minas Gerais.
+- Nesse estudo, quarenta e quatro camundongos foram infectados pela malária.
+    - Os camundongos do grupo 1 foram imunizados 30 dias antes da infecção.
+    - Além da infecção pela malária, os camundongos dos grupos 1 e 3 foram, também, infectados pela esquistossomose.
+- O desfecho de interesse nesse estudo foi o tempo (em dias) decorrido desde a infecção pela malária até a morte do camundongo.
+    - O estudo teve duração de 30 dias.
+
+\framebreak
+
+\footnotesize
+
+```{r dados.malaria, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.mala <- read.table("../dados/malaria.csv",
+                      sep = ";",
+                      header = TRUE)
+head(df.mala)
+
+```
+
+\framebreak
+
+```{r km.mala, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.mala,
+               conf.type = "log-log")
+
+plot(ekm, conf.int = FALSE, 
+     mark.time = TRUE,
+     col = c("orange", "blue", "red"), 
+     lwd = 2, xlab = "Tempo (dias)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 30, by = 5),
+       col = "lightgrey", lty = 3)
+
+legend("bottomleft",
+       c("Grupo 1", "Grupo 2", "Grupo 3"), 
+       col = c("orange", "blue", "red"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r logrank2, echo=TRUE, message=FALSE, warning=FALSE}
+
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala)
+
+```
+
+\normalsize
+
+\framebreak
+
+- Constatada a diferença entre os grupos \structure{($p = 0,002$)}, existe a necessidade de identificar quais curvas diferem entre si.
+- Se realizarmos comparações dois a dois, o método de Bonferroni ajusta o nível de significância de acordo com o número de comparações múltiplas.
+    + Como temos três grupos, três comparações dois a dois são possíveis de se realizar.
+    + Utilizando o nível de 5% de significância, o nível de significância ajustado por Bonferroni é $\alpha^{*} = \alpha/3 = 0,05/3 = 0,017$ para cada um dos testes.
+
+\framebreak
+
+__Grupo 1 vs. Grupo 2__
+
+\footnotesize
+
+```{r logrank3, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 1 vs grupo 2
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 3)
+
+```
+
+\framebreak
+
+\normalsize
+
+__Grupo 1 vs. Grupo 3__
+
+\footnotesize
+
+```{r logrank4, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 1 vs grupo 3
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 2)
+
+```
+
+\framebreak
+
+\normalsize
+
+__Grupo 2 vs. Grupo 3__
+
+\footnotesize
+
+```{r logrank5, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 2 vs grupo 3
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 1)
+
+```
+
+\normalsize
+
+\framebreak
+
+- \structure{Conclusão:} ao nível de 5% de significância, 
+    + entre os grupos 1 e 2, não foram encontradas evidências de diferenças;
+    + a diferença entre os grupos 1 e 3 atesta a eficácia da imunização pela malária na presença de infecções pela malária e pela equistossomose;
+    + por outro lado, a diferença entre os grupos 2 e 3 mostra o impacto na mortalidade dos camundongos devido à infecção pela esquistossomose.
+    
+## Considerações {.allowframebreaks}
+
+- Outros testes, alternativos ao (ou generalizações do) _log-rank_, foram propostos na literatura:
+    + generalização para a estatística de Wilcoxon\footnote{Gehan, E. A. (1965). A Generalized Wilcoxon Test for Comparing Arbitrarily Singly-Censored Samples. \emph{Biometrika}, 52(1/2), 203–223.};
+    + Peto e Peto (1972)\footnote{Peto, R., \& Peto, J. (1972). Asymptotically Efficient Rank Invariant Test Procedures. \emph{Journal of the Royal Statistical Society. Series A (General)}, 135(2), 185–207.};
+    + Tarone e Ware (1977)\footnote{Tarone, R. E., \& Ware, J. (1977). On Distribution-Free Tests for Equality of Survival Distributions. \emph{Biometrika}, 64(1), 156–160.};
+    + Prentice (1978)\footnote{Prentice, R. L. (1978). Linear Rank Tests with Right Censored Data. \emph{Biometrika}, 65(1), 167–179.}.
+- Foi dado ênfase ao teste de _log-rank_, pois este possui boas propriedades estatísticas, além de ser um dos testes mais utilizados para comparar curvas de sobrevivência.
+
+## Considerações {.allowframebreaks}
+
+- Com o estimador de \structure{Kaplan-Meier} e o teste de \structure{log-rank} é possível:
+    + descrever dados de sobrevivência;
+    + comparar funções de sobrevivência entre grupos.
+- No entanto, estamos limitados a avaliar a influência de covariáveis (exposições ou tratamentos) discretas (categóricas ou categorizadas) na função de sobevivência em análises não ajustadas.
+- Como avaliar o efeito, na função de sobrevivência, de covariáveis contínuas, e ajustando para potenciais vairáveis de confusão?
+    + Uma possibilidade é proposição de modelos estatísticos com uma estrutura de regressão.
+    + Um modelo muito utilizado é o \structure{modelo de Cox}.
+
+## Para casa
+
+1. Leia o capítulo 2 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulo 4 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+
+## Próxima aula
+
+- Modelo de Cox.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-forecast.jpg'))
+
+```
+

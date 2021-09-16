@@ -1,7 +1,8 @@
 ---
-title: '`R`, `survival` e `survminer`: breve tutorial para Análise de Sobrevivência'
+title: 'Análise de Sobrevivência com o `R`: um breve tutorial dos pacotes `survival` e `survminer`'
+subtitle: 'Material de apoio da disciplina EPI10 do PPGEPI - UFRGS'
 author: "Rodrigo Citton P. dos Reis"
-date: "Porto Alegre, 2021"
+date: '`r paste(format(Sys.Date(), "%d"),format(Sys.Date(), "%B"), format(Sys.Date(), "%Y"), sep = " de ")`'
 output:
   pdf_document: default
   html_document:
@@ -16,7 +17,7 @@ vignette: |
 
 # Introdução
 
-Este tutorial tem como objetivo descrever as principais funções do pacote `survival` [@survival-package], um dos pacotes mais populares em análise de sobrevivência. As principais funcionalidades do pacote `survival` são:
+Este tutorial tem como objetivo descrever as principais funções do pacote `survival` [@survival-package], um dos pacotes estatísticos mais populares em análise de sobrevivência. As principais funcionalidades do pacote `survival` são:
 
 - Organizar dados de sobrevivência na presença de censura.
 - Estimar a função de sobrevivência.
