@@ -1,4 +1,4 @@
-## ----dados, echo=FALSE, message=FALSE, warning=FALSE-------------------------------------------------------
+## ----dados, echo=FALSE, message=FALSE, warning=FALSE----------------------------------------------------------
 
 tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16,
             16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10,
@@ -27,13 +27,13 @@ ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
 
 
 
-## ----km.grupo, echo=FALSE, message=FALSE, warning=FALSE----------------------------------------------------
+## ----km.grupo, echo=FALSE, message=FALSE, warning=FALSE-------------------------------------------------------
 
 ekm
 
 
 
-## ----km.grupo.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'---------
+## ----km.grupo.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'------------
 
 plot(ekm, conf.int = TRUE, 
      mark.time = TRUE,
@@ -56,14 +56,14 @@ legend("bottomleft",
 
 
 
-## ----logrank, echo=TRUE, message=FALSE, warning=FALSE------------------------------------------------------
+## ----logrank, echo=TRUE, message=FALSE, warning=FALSE---------------------------------------------------------
 
 survdiff(Surv(time = tempo, event = cens) ~ grupo,
          data = df.hep)
 
 
 
-## ----dados.malaria, echo=TRUE, message=FALSE, warning=FALSE------------------------------------------------
+## ----dados.malaria, echo=TRUE, message=FALSE, warning=FALSE---------------------------------------------------
 
 df.mala <- read.table("../dados/malaria.csv",
                       sep = ";",
@@ -72,7 +72,7 @@ head(df.mala)
 
 
 
-## ----km.mala, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'---------------
+## ----km.mala, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'------------------
 
 ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
                data = df.mala,
@@ -95,14 +95,14 @@ legend("bottomleft",
 
 
 
-## ----logrank2, echo=TRUE, message=FALSE, warning=FALSE-----------------------------------------------------
+## ----logrank2, echo=TRUE, message=FALSE, warning=FALSE--------------------------------------------------------
 
 survdiff(Surv(time = tempo, event = cens) ~ grupo,
          data = df.mala)
 
 
 
-## ----logrank3, echo=TRUE, message=FALSE, warning=FALSE-----------------------------------------------------
+## ----logrank3, echo=TRUE, message=FALSE, warning=FALSE--------------------------------------------------------
 
 # grupo 1 vs grupo 2
 survdiff(Surv(time = tempo, event = cens) ~ grupo,
@@ -111,7 +111,7 @@ survdiff(Surv(time = tempo, event = cens) ~ grupo,
 
 
 
-## ----logrank4, echo=TRUE, message=FALSE, warning=FALSE-----------------------------------------------------
+## ----logrank4, echo=TRUE, message=FALSE, warning=FALSE--------------------------------------------------------
 
 # grupo 1 vs grupo 3
 survdiff(Surv(time = tempo, event = cens) ~ grupo,
@@ -120,7 +120,7 @@ survdiff(Surv(time = tempo, event = cens) ~ grupo,
 
 
 
-## ----logrank5, echo=TRUE, message=FALSE, warning=FALSE-----------------------------------------------------
+## ----logrank5, echo=TRUE, message=FALSE, warning=FALSE--------------------------------------------------------
 
 # grupo 2 vs grupo 3
 survdiff(Surv(time = tempo, event = cens) ~ grupo,

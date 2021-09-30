@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.8)  15 SEP 2021 23:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.8)  23 SEP 2021 00:24
 entering extended mode
 **C:/Users/rodri/OneDrive/Documentos/UFRGS/Disciplinas/analise_sobrevivencia/EP
 I10/output_pdf/03_comparacao_sobrevivencia.tex
@@ -1558,7 +1558,7 @@ I10/images/Statistically-Insignificant-forecast.jpg>]
 Here is how much of TeX's memory you used:
  25304 strings out of 479321
  472334 string characters out of 2856584
- 800823 words of memory out of 3000000
+ 800821 words of memory out of 3000000
  41870 multiletter control sequences out of 15000+600000
  495359 words of font info for 165 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1590,7 +1590,7 @@ e1/public/lm/lmtt10.pfb><C:/Users/rodri/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/public/lm/lmtt8.pfb><C:/Users/rodri/AppData/Local/Programs/MiKTeX/fonts/type
 1/public/lm/lmtti10.pfb><C:/Users/rodri/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/public/amsfonts/symbols/msam10.pfb>
-Output written on 03_comparacao_sobrevivencia.pdf (39 pages, 594125 bytes).
+Output written on 03_comparacao_sobrevivencia.pdf (39 pages, 594124 bytes).
 PDF statistics:
  520 PDF objects out of 1000 (max. 8388607)
  98 named destinations out of 1000 (max. 500000)
