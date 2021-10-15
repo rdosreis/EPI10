@@ -1,0 +1,321 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Modelo de Cox"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+```{r laringe, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+df.laringe <- read.table(file = "../dados/laringe.txt",
+                         header = TRUE)
+
+
+head(df.laringe)
+
+```
+
+```{r laringe.conhece.dados, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+```{r laringe.transforma.dados, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+df.laringe$estagio <- factor(x = df.laringe$estagio,
+                             levels = 1:4,
+                             labels = c("I", "II", "III", "IV"))
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+# Adequação do Modelo de Cox {.allowframebreaks}
+
+- O modelo de regressão de Cox é bastante flexível devido à presença do componente não-paramétrico.
+- Mesmo assim, ele não se ajusta a qualquer situação e como qualquer outro modelo estatéstico, requer o uso de técnicas para avaliar a sua adequação.
+- Em particular, a \structure{suposição de riscos proporcionais}.
+    + A violação desta suposição pode acarretar sérios viéses na estimação dos coeficientes do modelo.
+
+\framebreak
+
+- Diversos métodos para avaliar a adequação deste modelo encontram-se disponíveis na literatura.
+- Estes baseiam-se, essencialmente, em \structure{análise de resíduos}.
+- Alguns desses métodos são apresentados a seguir.
+
+# Avaliação da proporcionalidade dos riscos
+
+## Método gráfico descritivo {.allowframebreaks}
+
+- Para verificar a suposição de riscos proporcionais no modelo de Cox, um gráfico simples e bastante usado é obtido, inicialmente, dividindo os dados em \structure{$m$} estratos, usualmente de acordo com alguma covariável.
+    + Por exemplo, dividir os dados em dois estratos de acordo com a covariável sexo.
+- Em seguida, deve-se estimar \structure{$\widehat{\Lambda}_0(t)$} para cada estrato.
+
+\framebreak
+
+- Se a suposião for válida, as curvas do logaritmo de \structure{$\widehat{\Lambda}_0(t)$} versus \structure{$t$}, ou \structure{$\log(t)$}, devem apresentar diferenças aproximadamente constantes no tempo.
+    + Curvas não paralelas significam desvios da suposição de riscos proporcionais.
+- É razoável construir este gráfico para cada covariável incluída no modelo.
+    + Se a covariável for de natureza contínua, uma sugestão é agrupá-la em um pequeno número de categorias.
+- Situações extremas de violação da suposição ocorrem quando as curvas se cruzam.
+
+\framebreak
+
+No `R`, utilizando os dados do estudo sobre câncer de laringe, temos:
+
+\footnotesize
+
+```{r laringe.km, echo=TRUE, message=FALSE, warning=FALSE}
+library(survival)
+
+ekm <- survfit(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe,
+               conf.type = "log-log")
+
+ekm
+
+```
+
+\framebreak
+
+```{r laringe.mgd, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm,
+     fun = "cloglog",
+     conf.int = FALSE,
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"),
+     lwd = 2, xlab = expression(log*(t)),
+     ylab = expression(log*(hat(Lambda)[0]*(t))))
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topleft",
+       c("I", "II", "III", "IV"),
+       title = "Estágio",
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+
+```
+
+\normalsize
+
+## Método com coeficiente dependente do tempo {.allowframebreaks}
+
+- Uma proposta adicional de análise da suposição de riscos proporcionais é fazer uso dos
+\structure{resíduos de Schoenfeld}.
+- Existe um conjunto de resíduos para cada covariável.
+- Usar o gráfico dos \structure{resíduos padronizados} contra o tempo para cada covariável.
+- Inclinação zero apresenta evidência a favor da proporcionalidade dos riscos.
+
+\framebreak
+
+No `R`:
+
+\footnotesize
+
+```{r laringe.resid, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+mod1 <- coxph(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe, method = "breslow")
+
+mod2 <- coxph(Surv(time = tempos, event = cens) ~ idade,
+               data = df.laringe, method = "breslow")
+
+mod3 <- coxph(Surv(time = tempos, event = cens) ~ estagio + idade,
+               data = df.laringe, method = "breslow")
+
+par(mfrow = c(1,2))
+plot(cox.zph(mod3),
+     col = "red",
+     lwd = 2)
+
+```
+
+\normalsize
+
+## Medidas estatísticas e testes de hipóteses {.allowframebreaks}
+
+- As técnicas gráficas envolvem uma interpretação com carácter subjetivo.
+- Testes de hipóteses podem auxiliar neste processo de decisão.
+- O coeficiente de correlação de Pearson \structure{($\rho$)} entre os \structure{resíduos padronizados de Schoenfeld} e \structure{$g(t)$}\footnote{A função $g(\cdot)$ pode ser especificada tal como $g(t) = t$ ou $g(t) = \log(t)$, por exemplo.} para cada covariável é uma dessas medidas.
+- Valores de \structure{$\rho$} próximos de zero mostram evidências em favor da suposição de riscos proporcionais.
+- Um teste hipóteses global de proporcionalidade de riscos sobre todas as covariávies no modelo pode ser realizado.
+
+## Medidas estatísticas e testes de hipóteses {.allowframebreaks}
+
+No `R`:
+
+\footnotesize
+
+```{r laringe.resid3, echo=TRUE, message=FALSE, warning=FALSE}
+
+cox.zph(mod3)
+
+```
+
+\normalsize
+
+## Considerações finais
+
+- \structure{Resíduos \emph{martingale} e \emph{deviance}} podem ser obtidos para a avaliação de outros aspectos do modelo de Cox, tais como:
+    + pontos atípicos;
+    + forma funcional da relação das covariáveis (não linearidade, por exemplo);
+    + pontos influentes.
+- Retornaremos a estas técnicas nas próximas aulas, quando também discutiremos alternativas ao modelo de Cox quando a suposição de riscos proporcionais é violada.
+
+# Comparação de modelos
+
+## Teste da razão de verossimilhanças {.allowframebreaks}
+
+- \structure{Testes da razão de verossimilhanças}, são comuns e amplamente usados, especialmente ao comparar __modelos aninhados__ que diferem em relação a múltiplos parâmetros.
+- Por exemplo, nos dados do exemplo do estudo de câncer de laringe, suponha que desejamos comparar o modelo 1 (`estagio`) versus o modelo 3 (`estagio + idade`).
+    - Ou ainda, o modelo 3 como um modelo com efeito de interação entre `estagio + idade`.
+
+\framebreak
+
+- Denote por $\widehat{\beta}_0$ o vetor de parâmetros estimados do primeiro modelo \structure{(``modelo reduzido'')} e $\widehat{\beta}_1$ o vetor de parâmetros estimados do segundo modelo \structure{(``modelo cheio'')}, o teste da razão de verossimilhança (que requer apenas o ajuste de dois modelos) é baseado em
+
+$$
+2[\ell(\widehat{\beta}_1) - \ell(\widehat{\beta}_0)] \stackrel{a}\sim\chi^2_p,
+$$
+
+em que $\ell(\beta)$ é função de log-verossimilhança do modelo, e $p$ é o número de graus de liberdade da distribuição qui-quadrado, e é definido pela diferença do número de parâmetros dos dois modelos.
+
+\framebreak
+
+No `R`:
+
+\footnotesize
+
+```{r laringe.trv, echo=TRUE, message=FALSE, warning=FALSE}
+
+anova(mod1, mod3)
+
+```
+
+\framebreak
+
+```{r laringe.trv2, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod4 <- coxph(Surv(time = tempos, event = cens) ~ estagio*idade,
+              data = df.laringe, method = "breslow")
+
+summary(mod4)
+
+anova(mod3, mod4)
+
+```
+
+\normalsize
+
+\framebreak
+
+- Modelos não aninhados podem ser comparados pelos \structure{critérios de informação de Akaike (AIC)} ou \structure{Bayesiano (BIC)}.
+
+\footnotesize
+
+```{r laringe.aic, echo=TRUE, message=FALSE, warning=FALSE}
+
+AIC(mod1)
+AIC(mod2)
+
+BIC(mod1)
+BIC(mod2)
+
+```
+
+\normalsize
+
+# Efeitos não-lineares
+
+## Splines {.allowframebreaks}
+
+\footnotesize
+
+```{r laringe.sp, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod5 <- coxph(Surv(time = tempos, event = cens) ~ pspline(idade),
+              data = df.laringe, method = "breslow")
+
+summary(mod5)
+
+```
+
+\framebreak
+
+```{r laringe.sp2, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+termplot(model = mod5, terms = "pspline(idade)",
+         se = TRUE,
+         xlabs = "idade",
+         ylabs = "log-HR",
+         data = df.laringe)
+
+```
+
+
+```{r laringe.sp3, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(splines)
+mod6 <- coxph(Surv(time = tempos, event = cens) ~ ns(idade, df = 3),
+              data = df.laringe, method = "breslow")
+
+summary(mod6)
+
+```
+
+\framebreak
+
+```{r laringe.sp4, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+termplot(model = mod6, terms = "ns(idade, df = 3)",
+         se = TRUE,
+         xlabs = "idade",
+         ylabs = "log-HR",
+         data = df.laringe)
+
+```
+
+\normalsize
+
+## Para casa
+
+1. Leia o capítulo 5 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulo 6 e 7 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+
+## Próxima aula
+
+- Aplicações com o modelo de Cox.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-barras05.jpg'))
+
+```
+

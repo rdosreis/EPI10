@@ -2,7 +2,7 @@ library(here)
 library(rmarkdown)
 
 pasta <- "Rmds"
-arquivo <- "05_modelo_de_cox_cont"
+arquivo <- "07_modelo_de_cox_exemplos"
 
 arquivo_rmd <- paste0(arquivo, ".Rmd")
 arquivo_pdf <- paste0(arquivo, ".pdf")

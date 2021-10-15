@@ -1,0 +1,378 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Aplicações com o modelo de Cox"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+header-includes:
+  - \titlegraphic{\hfill\includegraphics[height=1.5cm]{logos/ppgepi-logo.png}}
+---
+
+# Modelos estatísticos
+
+\structure{Breiman (2001)}\footnote{Breiman, L. Statistical modeling: the two cultures. \emph{Statistical Science}, 16:199-231, 2001.} sugere que existem dois objetivos na análise de dados:
+
+- \structure{Predição:} ser capaz de prever o que as respostas vão ser para futuras variáveis de entrada.
+- \structure{Informação:} extrair algumas informações sobre como a natureza está associando as variáveis de resposta às variáveis de entrada. 
+
+## Modelos estatísticos {.allowframebreaks}
+
+Ainda, para \structure{Breiman (2001)}, existem duas abordagens diferentes para esses objetivos:
+
+- \structure{A cultura de modelagem de dados}, em que a análise começa assumindo um modelo de dados estocástico para o interior da "caixa preta". Por exemplo, um modelo de dados comum é que os dados são gerados por seleções independentes de
+
+\footnotesize
+$$
+\mbox{variáveis resposta} = f(\mbox{variáveis aleatórias, ruído aleatório, parâmetros})
+$$
+
+\normalsize
+\framebreak
+
+- Os valores dos parâmetros são estimados a partir dos dados e o modelo então usado para informação e/ou previsão.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='40%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'cultura_mod_dados.png'))
+
+```
+
+- __Validação do modelo.__ Sim-não usando testes de adequação e análise de resíduos.
+- __População estimada da cultura.__ 98% de todos os estatísticos. 
+
+\framebreak
+
+- \structure{A cultura de modelagem algorítmica}, que considera o interior da caixa complexo e desconhecido. A abordagem é encontrar uma função $f(\mathbf{x})$ - um algoritmo que opera em $\mathbf{x}$ para prever as respostas $y$. 
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='40%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'cultura_mod_algo.png'))
+
+```
+
+- __Validação do modelo.__ Medido por precisão preditiva.
+- __População estimada da cultura.__ 2% dos estatísticos, muitos em outras áreas.
+
+\framebreak
+
+\structure{Shmueli (2010)} em \structure{\emph{To Explain or to Predict?}}\footnote{Shmueli, G. To explain or to predict. \emph{Statistical Science}, 25:289-310, 2010.} sugere três tipos de modelagem:
+
+- \structure{Modelagem explicativa:} aplicação de modelos estatísticos aos dados para testar hipóteses causais.
+- \structure{Modelagem preditiva:} aplicação de modelos estatísticos \structure{(e aprendizado estatístico/máquina)} para predição/classificação de novas ou futuras observações.
+- \structure{Modelagem descritiva:} aplicação de modelos estatísticos para representar de maneira compacta a estrutura dos dados; captura a associação entre as variáveis dependente e independentes \structure{(ausência de hipóteses causais)}.
+
+## Modelos estatísticos {.allowframebreaks}
+
+As abordagens explicativa e preditiva são diferentes.
+
+- Relação \structure{Viés-Variância:} O __erro de previsão esperado__ ($EPE$) para uma nova observação com valor $x$, usando uma função de perda quadrática, é dado por
+
+\begin{align*}
+EPE &= \E[Y - \hat{f}(x)]^2\\
+&= \E[Y - \hat{f}(x)]^2 + \{\E[\hat{f}(x)] - f(x)\}^2 + \E\{\hat{f}(x) - \E[\hat{f}(x)]\}^2\\
+&= \Var(Y) + \mbox{Viés}[\hat{f}(x)] + \Var[\hat{f}(x)].
+\end{align*}
+
+\framebreak
+
+- Esta decomposição revela uma fonte da diferença entre modelagem explicativa e preditiva:
+    + Na modelagem explicativa, o foco está em minimizar o viés para obter a representação mais precisa da teoria subjacente.
+    + Em contraste, a modelagem preditiva busca minimizar a combinação de viés e variância de estimativa, ocasionalmente sacrificando a precisão teórica para melhorar a precisão empírica.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'shmueli_figs.png'))
+
+```
+
+# Aplicações com o modelo de Cox: escore de risco cardiovascular (em 10 anos) de Framingham
+
+## Escore de risco (Framingham) {.allowframebreaks}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-01.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-02.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-03.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-04.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-05.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-06.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-07.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='65%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-08.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-09.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-10.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-11.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='65%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-12.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='45%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-13.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-14.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-15.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-16.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-17.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-18.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'fram-19.png'))
+
+```
+
+# Aplicações com o modelo de Cox: resposta autonômica cardíaca e doença coronariana - ARIC Study
+
+## Resposta autonômica cardíaca e CHD - ARIC {.allowframebreaks}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='95%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-01.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='75%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-02.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='60%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-03.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='75%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-04.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-05.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='65%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-06.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='55%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-07.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-08.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='65%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-09.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='95%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-10.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='95%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-11.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='95%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-12.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='85%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'aula-07', 'aric-13.png'))
+
+```
+
+
+<!-- ## Para casa -->
+
+<!-- 1. Leia o capítulo 5 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}. -->
+<!-- 2. Leia os capítulo 6 e 7 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}. -->
+
+## Próxima aula
+
+- Extensões do modelo de Cox.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-barras04.jpg'))
+
+```
+

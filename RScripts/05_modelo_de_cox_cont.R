@@ -1,6 +1,6 @@
 ## ----laringe, echo=TRUE, message=FALSE, warning=FALSE-------------------------------------
 
-df.laringe <- read.table(file = "../dados/laringe.txt",
+df.laringe <- read.table(file = here::here("dados","laringe.txt"),
                          header = TRUE)
 
 
@@ -55,7 +55,8 @@ abline(h = seq(0, 1, by = 0.2),
 legend("topright",
        c("I", "II", "III", "IV"), 
        col = c("#1B9E77", "#D95F02",
-             "#7570B3", "#E7298A"), 
+             "#7570B3", "#E7298A"),
+       title = "Estágio",
        lwd = 2, bty = "n")
 
 
