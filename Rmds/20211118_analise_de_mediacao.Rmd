@@ -1,0 +1,561 @@
+---
+title: "Seminários de Doutorado"
+subtitle: "Análise de mediação em epidemiologia: uma introdução"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+bibliography: analise_mediacao.bib
+csl: associacao-brasileira-de-normas-tecnicas-ufrgs-initials.csl
+link-citations: yes
+---
+
+# Introdução {.allowframebreaks}
+
+\begin{figure}[!ht] 
+  \centering
+\begin{tikzpicture}
+% nodes %
+\node[text centered] (x) {\begin{tabular}{c}
+\emph{Escolaridade}\\ \emph{materna}\
+\end{tabular}
+};
+%\node[right = 1.5 of z, text centered] (t) {$T$};
+\node[right = 3 of x, text centered] (y) {\begin{tabular}{c}
+\emph{Diabetes na}\\ \emph{vida adulta}\
+\end{tabular}
+};
+\node[above = 1.5 of {$(x)!0.5!(y)$}, text centered] (m) {\begin{tabular}{c}
+\emph{Posição}\\ \emph{socioeconômica}\
+\end{tabular}
+};
+ 
+% edges %
+\draw[->, line width= 1] (x) --  (y);
+\draw[->, line width= 1] (x) --  (m);
+\draw[->, line width= 1] (m) --  (y);
+\end{tikzpicture}
+\end{figure}
+
+\framebreak
+
+## Como ocorre um efeito - o fenômeno da mediação {.allowframebreaks}
+
+- Uma maneira de explicar uma relação de causa e efeito é explicar \structure{como} a causa afeta o desfecho.
+- Podemos descrever o \structure{mecanismo} pelo qual isso ocorre.
+- Esse mecanismo pode ser concebido como uma explicação de como a causa e certos estados iniciais levam a um estado final específico (o desfecho) por meio de um \structure{processo} ou uma série de processos envolvendo diferentes \structure{estágios intermediários}.
+
+\framebreak
+
+- Explicações (causais) desse tipo descrevem o que podemos e não podemos aprender sobre tais mecanismos e processos a partir da análise estatística de dados empíricos.
+- Os métodos relacionados a este tipo de explicação enfocarão o cenário no qual um investigador acredita que um determinado \structure{estado intermediário} pode ser responsável por parte ou a maior parte do efeito da causa no desfecho.
+- Tais métodos tentam avaliar que parte do efeito da causa sobre o desfecho está de fato operando por meio desse intermediário em particular e que parte pode funcionar por meio de outros mecanismos ou \structure{caminhos (trajetórias)}.
+
+\framebreak
+
+- O efeito da causa sobre o desfecho que opera por meio do intermediário de interesse é algumas vezes referido como um \structure{efeito indireto} ou \structure{efeito mediado}.
+- O efeito da causa sobre o desfecho que não é por meio do intermediário de interesse é algumas vezes referido como o \structure{efeito direto} ou \structure{efeito não mediado}.
+
+::: {.block}
+
+### Efeito direto
+
++ É importante ter em mente que tais efeitos são diretos apenas em relação ao intermediário de interesse;
++ Provavelmente haverá outros intermediários ou mecanismos responsáveis por outros aspectos do efeito da causa no desfecho.
+
+:::
+
+\framebreak
+
+- O fenômeno pelo qual uma causa afeta um intermediário e a mudança no intermediário passa a afetar o desfecho é o que geralmente é referido como o fenômeno de \structure{``mediação''}.
+- O conjunto de técnicas pelas quais um pesquisador avalia a magnitude relativa desses efeitos diretos e indiretos é algumas vezes referido como \structure{``análise de mediação''}.
+- O próprio intermediário às vezes é chamado de \structure{``mediador'' (variável mediadora)}.
+
+## Motivações para avaliar a mediação {.allowframebreaks}
+
+- Em alguns casos, a motivação pode ser simplesmente \structure{explicação e compreensão}.
+- Um exemplo da \structure{epidemiologia genética}: __variantes genéticas__ foram encontradas associadas ao __comportamento de fumar__ e ao __câncer de pulmão__.
+    + __Questão:__ as variantes afetaram o câncer de pulmão apenas porque afetaram o tabagismo e sabemos que fumar causa câncer de pulmão ou as variantes afetaram o câncer de pulmão por outros caminhos que não o fumo?
+    
+\framebreak
+
+- O estudo da mediação também pode ajudar a \structure{confirmar e refutar teoria}.
+- Um exemplo da \structure{epidemiologia do curso de vida}: foi constatado repetidamente que o __baixo status socioeconômico (SSE)__ durante a infância está associado a desfechos adversos de saúde mais tarde na vida.
+    - No entanto, permanece o debate se isso ocorre porque o baixo SSE durante a infância afeta o SSE adulto, o que por sua vez afeta a saúde do adulto \structure{(um modelo de ``trajetória social'')}, ou se o SSE infantil afeta a saúde do adulto através de outros caminhos que não o SSE adulto \structure{(um modelo de ``efeitos latentes/período sensível'')}, ou ambos.
+
+\framebreak
+
+- Em alguns cenários, podemos não ser capazes de \structure{intervir} na exposição primária ou na causa do desfecho diretamente e, portanto, podemos estar interessados em saber se podemos eliminar um efeito prejudicial de uma exposição intervindo \structure{em algum mecanismo particular} ou intermediário.
+    + No exemplo de epidemiologia genética acima, não podemos intervir diretamente nas variantes genéticas, mas podemos estar interessados em quanto do efeito das variantes genéticas no câncer de pulmão poderíamos bloquear se pudéssemos intervir para eliminar o fumo.
+
+\framebreak
+
++ \structure{Disparidades em saúde/Epidemiologia social}: podemos, por exemplo, encontrar diferenças em um desfecho de saúde entre grupos étnico-raciais. Obviamente, não podemos intervir na etnia e raça, mas podemos estar interessados na medida em que as disparidades de saúde entre grupos étnico-raciais podem ser reduzidas ou eliminadas se pudéssemos intervir para igualar os níveis de educação entre os grupos étnico-raciais.
+    
+```{r, cache=TRUE, message=FALSE, echo=FALSE, out.width="90%", purl=FALSE, fig.align='center'}
+
+knitr::include_graphics(here::here('images', 'interseccionalidade.png'))
+
+```
+
+\framebreak
+
+- Em um \structure{ensaio clínico aleatorizado} que uma intervenção tem um efeito benéfico, __em média__, para a população do estudo.
+    + \structure{Refinar a interveção} de modo a aumentar a magnitude do efeito.
+    + Isso pode ser feito alterando/melhorando os componentes da intervenção que visam um determinado mecanismo para o desfecho.
+    + É importante saber se, e em que medida, o mecanismo alvo é um caminho relevante da intervenção ao desfecho. 
+    + Se o mecanismo alvo explica uma grande parte do efeito, pode ser desejável refinar a intervenção para alcançar esse mecanismo.
+
+## Principais abordagens de análise
+
+- Duas linhas principais na literatura para o estudo de mediação:
+    - Abordagem clássica (Ciências sociais/psicometria) \color{darkpastelpurple} [@baron_moderatormediator_1986; @mackinnon_introduction_2008]\color{black}.
+    - Abordagem geral (inferência causal) \color{darkpastelpurple} [@robins_identifiability_1992; @pearl_direct_2001]\color{black}.
+
+# Abordagem clássica
+
+## Baron e Kenny (SEM) {.allowframebreaks}
+
+- Suponha uma exposição $X$, um desfecho $Y$, um mediador $M$, e possíveis confundidoras pré-exposição $C$.
+- \color{darkpastelpurple} @baron_moderatormediator_1986 \color{black} propuseram uma abordagem para análise de mediação que vem sendo utilizado por muitos cientistas sociais.
+
+\framebreak
+
+- Esta abordagem é baseada no seguinte sistema de equações estruturais lineares \structure{(\emph{linear structural equation model} -- LSEM)}:
+
+\begin{align}
+\textcolor{darkpastelred}{Y} &\textcolor{darkpastelred}{=} \textcolor{darkpastelred}{\alpha_1 + \beta_1X + \epsilon_{1}}\label{lsem1}\\
+M &= \alpha_2 + \beta_2X + \epsilon_{2}\label{lsem2}\\
+Y &= \alpha_3 + \beta_3X + \gamma M + \epsilon_{3}\label{lsem3}.
+\end{align}
+
+\begin{figure}[!ht] 
+  \centering
+\begin{tikzpicture}
+% nodes %
+\node[text centered] (x) {$X$};
+\node[right = 3 of x, text centered] (y) {$Y$};
+\node[above = 1.5 of {$(x)!0.5!(y)$}, text centered] (m) {$M$};
+ 
+% edges %
+\draw[->, line width= 1] (x) --  node[below,font=\footnotesize]{$\beta_3$} (y);
+\draw[->, line width= 1] (x) --  node[above,font=\footnotesize]{$\beta_2$} (m);
+\draw[->, line width= 1] (m) --  node[above,font=\footnotesize]{$\gamma$} (y);
+\end{tikzpicture}
+\end{figure}
+
+\framebreak
+
+1. Confundidores pré-exposição podem ser incluídos no modelo.
+2. \color{darkpastelpurple} @baron_moderatormediator_1986 \color{black} sugeriram que a existência de efeito de mediação pode ser testado ao ajustar separadamente os três modelos lineares e testar as hipóteses (i) $\beta_1=0$, (ii) $\beta_2=0$, e (iii) $\gamma=0$.
+    - Se todas as hipóteses são rejeitadas, então $\beta_2\times\gamma$ \structure{(\emph{``método do produto dos coeficientes''})} pode ser interpretado como um efeito de mediação.
+    - \structure{\emph{Efeito direto} de $X$ em $Y$:} $\beta_3$.
+
+3. Ao substituir a equação \eqref{lsem2} na equação \eqref{lsem3} obtemos
+
+$$
+Y=(\alpha_3 + \alpha_2\gamma) + (\beta_3 + \beta_2\gamma)X + (\gamma\epsilon_2 + \epsilon_3),
+$$
+e portanto, a equação \eqref{lsem1} é redundante e testar $\beta_1 = 0$ é desencessário, pois o efeito de mediação pode ser não zero, mesmo quando o efeito total é zero.
+
+4. Para uma interpretação significante estas definições dependem de suposições que raramente são discutidas, como:
+    - Não existência de confundidores não mensurados;
+    - Correta especificação do modelo paramétrico (por exemplo, linearidade, ausência de interação $X$ -- $M$).
+
+5. Estas definições são específicas deste modelo e não existem resultados equivalentes para desfechos e/ou mediadoras binárias/categóricas.
+6. \alert{A natureza linear do modelo é chave e muito restritiva.}
+
+# Abordagem geral (inferência causal) 
+
+## Inferência causal {.allowframebreaks}
+
+- A abordagem formal adotada recentemente com relação a questões de mediação é a dos \structure{``desfechos potenciais''} ou estrutura \structure{``contrafactual''} para inferência causal, que vem sendo amplamente empregada no trabalho metodológico em __estatística__, __epidemiologia__, __economia__, __sociologia__, __psicologia__, __educação__, __ciência da computação__ e outras disciplinas.
+- A estrutura fornece uma \structure{notação formal e técnica} para conceituar a causalidade.
+- Isso é feito principalmente concebendo o que poderia ter ocorrido \structure{se} alguma ação ou estado fosse diferente do que era.
+
+\framebreak
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, out.width="100%", purl=FALSE, fig.align='center'}
+
+knitr::include_graphics(here::here('images', 'whatif.png'))
+
+```
+
+\framebreak
+
+- Se algum desfecho tivesse sido diferente se alguma exposição ou ação fosse diferente do que foi, então diríamos que a exposição ou ação causa ou afeta o desfecho.
+- Na literatura estatística, a notação formal para esta abordagem contrafactual foi descrita por \color{darkpastelpurple} @Neyman1923 \color{black} no contexto de experimentos agrícolas aleatorizados.
+    + A estrutura foi posteriormente desenvolvida por \color{darkpastelpurple} @Rubin1974 \color{black} e ampliada para estudos observacionais.
+    + A estrutura foi posteriormente estendida para múltiplas exposições e exposições que variam ao longo do tempo por \color{darkpastelpurple} @Robins1986 \color{black} e foi relacionado a representações gráficas de causalidade por \color{darkpastelpurple} @spirtes_causation_1993 \color{black} e \color{darkpastelpurple} @pearl_causal_1995 \color{black}.
+
+\framebreak
+
+- \structure{Modelo causal de Rubin:} $Y_i(x)$ é o valor pontencial do desfecho caso $X_i$ tivesse sido fixado ao valor $x$.
+    + Considerando dois tratamentos/níveis de exposição (tratado vs. controle), $x = 0, 1$; o \structure{efeito causal individual} é definido por $Y_i(1) - Y_i(0)$.
+- \structure{Problema fundamental da inferência causal:} o resultado que teria ocorrido no estado contrafactual em que realizamos uma ação diferente da que foi de fato executada está essencialmente ausente ou desconhecido.
+    + Isso é o que torna a inferência causal desafiadora com dados empíricos.
+
+\framebreak
+
+::: {.block}
+
+### Roteiro
+
+O roteiro da inferência causal consiste em (pelo menos) três etapas:
+
+1. Uma __linguagem formal__ para definir inequivocamente conceitos causais.
+    + Desfechos potenciais, contrafactuais, operador $do()$
+2. __Suposições causais__ para a __identificação__ dos efeitos causais.
+    + __Diagramas causais__ (__DAGs__) são uma ferramenta para exibir nossas suposições causais
+3. __Métodos de análise__ (isto é, métodos estatísticos) que podem nos ajudar a tirar conclusões causais mais confiáveis a partir dos dados disponíveis.
+
+:::
+
+\framebreak
+
+- Embora seja difícil tirar conclusões sobre os efeitos causais para indivíduos específicos, às vezes é possível fazer inferências sobre esses efeitos em média para uma população.
+- A \structure{aleatorização} da ação/exposição/intervenção pode ajudar a garantir que os grupos que recebem as diferentes ações ou intervenções sejam comparáveis em média e, portanto, que qualquer diferença nos resultados entre os grupos que recebem diferentes ações ou intervenções seja atribuível à própria ação.
+
+::: {.block}
+
+### Identificação do efeito causal total médio
+
+Supondo __consistência__, __não interferência__ e __intercambiabilidade__, então o efeito causal total médio/populacional ($ET$) pode ser estimado a partir dos dados observados:
+
+$$
+ET = \E[Y_i(1) - Y_i(0)] = \E[Y_i|X_i = 1] - \E[Y_i|X_i = 0].
+$$
+
+:::
+
+\framebreak
+
+- Com \structure{dados observacionais} ainda podemos tentar controlar vários outros fatores que podem explicar as diferenças nos resultados entre os grupos de intervenção, exceto a própria intervenção. 
+
+::: {.block}
+
+### Identificação do efeito causal total médio
+
+Supondo __consistência__, __não interferência__ e __intercambiabilidade condicional__, então o efeito causal total médio/populacional ($ET$) pode ser estimado a partir dos dados observados:
+
+\footnotesize
+\begin{eqnarray*}
+ET &=& \E[Y_i(1) - Y_i(0)] \\
+    &=& \sum_{c_i}(\E[Y_i|X_i = 1, C_i = c_i] - \E[Y_i|X_i = 0, C_i = c_i]) \times \Pr(C_i = c_i),
+\end{eqnarray*}
+\normalsize
+em que $C_i$ representa um conjunto (vetor) de covariáveis (variáveis pré-tratamento/exposição).
+
+:::
+
+- Esse controle pode ajudar a atribuir diferenças nos resultados à causa ou ação em estudo, mas com dados observacionais na ausência de aleatorização, não se pode, em geral, ter certeza de que tal controle foi adequado.
+
+\framebreak
+
+- A estrutura de desfechos potenciais não fornece uma caracterização formal de todos os aspectos da \structure{causalidade}; e inúmeras questões sobre causalidade, como os critérios pelos quais identificamos a causa real de um evento, também são essencialmente deixadas sem solução pela estrutura de desfechos potenciais.
+- O que a estrutura contrafactual permite principalmente é um conjunto de definições que fornecem critérios ou condições suficientes indicando que algum evento ou exposição foi a causa de outro - não necessariamente \structure{a} causa, mas \structure{uma} causa.
+
+\framebreak
+
+- Esta abordagem contrafactual pode ser estendida para abordar questões de mediação, estendendo a notação contrafactual para incluir configurações contrárias aos fatos não apenas da exposição primária, mas também do mediador.
+
+## Análise de medição: abordagem causal {.allowframebreaks}
+
+- No contexto da mediação, também haverá resultados potenciais para a variável mediadora.
+- $M(x)$ denota o valor contrafactual do mediador $M$ de um indivíduo se a exposição $X$ fosse definida como o valor $x$.
+    - Para uma exposição binária, teríamos novamente dois resultados potenciais para o mediador: $M(1)$ e $M(0)$, o que o mediador teria sido com ou sem a exposição, respectivamente.
+
+\framebreak
+
+- Também consideraremos os resultados potenciais para $Y$ em intervenções hipotéticas tanto na exposição quanto no mediador.
+- $Y(x, m)$ denota o valor contrafactual para $Y$ de um indivíduo se $X$ fosse definido como $x$ e $M$ fosse definido como $m$.
+- Então, para cada indivíduo, temos um resultado potencial \structure{para cada configuração da exposição e do mediador}.
+    + No exemplo genético, $Y(x = 1, m = 10)$ seria o resultado que teríamos observado se o indivíduo tivesse a variante genética e fumado 10 cigarros por dia em média.
+    + Da mesma forma, $Y(x = 0, m = 20)$ seria o resultado que teríamos observado se o indivíduo não tivesse a variante genética e fumou 20 cigarros por dia em média.
+
+\framebreak
+
+- \alert{Temos muitos resultados potenciais diferentes desta forma $Y(x, m)$, mas mais uma vez, só conseguimos observar um deles.}
+- Usando contrafactuais dessa forma, \color{darkpastelpurple} @robins_identifiability_1992 \color{black} e \color{darkpastelpurple} @pearl_direct_2001 \color{black} deram então as seguintes definições para o que agora é chamado de \structure{``efeitos diretos controlados''} e \structure{``efeitos diretos e indiretos naturais''}.
+
+\framebreak
+
+::: {.block}
+
+### Efeito direto controlado
+
+- O efeito direto controlado do tratamento $X$ no desfecho $Y$ comparando $X = 1$ com $X = 0$ e definindo $M$ com $m$ é definido por $Y(1,m) - Y(0,m)$ e \structure{mede o efeito de $X$ em $Y$ não mediado por $M$}, ou seja, o efeito de $X$ em $Y$ depois de intervir para fixar o mediador em algum valor $m$.
+    - No exemplo da genética, em uma escala de diferença, o efeito direto controlado, $Y(1,m) - Y(0,m)$, denotaria o efeito no câncer de pulmão, comparando a presença e a ausência da variante genética com cigarros por dia fixados no nível $m$.
+    - Observe que este efeito direto pode variar com $m$.
+- O efeito direto controlado médio para uma população é então denotado por $\E[Y(1,m) - Y(0,m)]$ e o efeito direto controlado médio ($EDC$), condicional nas covariáveis $C = c$, é denotado por $EDC(m) = \E[Y(1,m) - Y(0,m)|c]$.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeito direto natural
+
+- O efeito direto natural da exposição $X$ no desfecho $Y$ comparando $X = 1$ com $X = 0$ intervindo para definir $M$ para o que teria sido se a exposição fosse $X = 0$ é formalmente definido por $Y(1, M(0)) - Y(0, M(0))$.
+- Essencialmente, o efeito direto natural assume que o  intermediário $M$ é definido como $M(0)$, o nível que teria sido para cada indivíduo se a exposição fosse $0$, e então compara o efeito direto do tratamento (com o intermediário fixado para este nível $M(0)$).
+    + No exemplo da genética, o efeito direto natural captura o efeito da exposição, comparando a variante presente com aquela ausente, no desfecho do câncer de pulmão, intervindo para definir o mediador, cigarros por dia, ao nível em que teria ocorrido na ausência do nível de exposição;
+    + Isto é, se a variante genética estivesse ausente.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeito direto natural (continuação)
+
+- Podemos definir o efeito direto natural médio ($EDN$) para a população como $\E[Y(1, M(0)) - Y(0, M(0))]$ ou condicional nas covariáveis $C = c$, $EDN = \E[Y(1, M(0)) - Y(0, M(0))|c]$.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeito indireto natural
+
+- O efeito indireto natural comparando o mediador fixado em $M(1)$ versus $M(0)$ e intervir para definir a exposição em $X = 1$ é formalmente definido por $Y(1,M(1)) - Y(1,M(0))$.
+- O efeito indireto natural assume que a exposição está definida para o nível $X = 1$ e, em seguida, compara o que teria acontecido se o mediador fosse definido para o que teria sido se a exposição fosse $X = 1$ versus o que teria acontecido se o mediador fosse definido para o que teria sido se a exposição fosse $X = 0$.
+    - No exemplo da genética, o efeito indireto natural captura o efeito no câncer de pulmão comparando o que aconteceria se a variante genética estivesse presente, mas fixássemos cigarros por dia no nível que teria sido se a variante estivesse presente ou ausente.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeito indireto natural (continuação)
+
+- Observe que para o efeito indireto natural ser diferente de zero, $M(1)$ e $M(0)$ devem ser diferentes um do outro; caso contrário, os dois contrafatuais no contraste, $Y(1,M(1)) - Y(1,M(0))$, seriam os mesmos e sua diferença seria zero.
+    - Portanto, para que o efeito indireto natural seja diferente de zero, a exposição deve mudar o mediador e, então, essa mudança no mediador deve prosseguir para mudar o desfecho.
+- Podemos definir o efeito indireto natural médio ($EIN$) para a população como $\E[Y(1,M(1)) - Y(1,M(0))]$ ou condicional nas covariáveis $C = c$, $EIN = \E[Y(1,M(1)) - Y(1,M(0))|c]$.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeitos total, direto e indireto naturais
+
+- Com essas definições contrafatuais, também podemos ver que um efeito total pode ser decomposto em um efeito direto e indireto natural.
+
+\footnotesize
+
+\begin{eqnarray*}
+ET &=& \E[Y(1) - Y(0)]\\
+&=& \E[Y(1,M(1)) - Y(0, M(0))]\\
+&=& \E[(Y(1,M(1)) - Y(1,M(0))) + (Y(1,M(0)) - Y(0,M(0)))]\\
+&=& \E[(Y(1,M(1)) - Y(1,M(0)))] + \E[(Y(1,M(0)) - Y(0,M(0)))]\\
+&=& EIN + EDN.
+\end{eqnarray*}
+
+\normalsize
+
+- Também podemos definir esses efeitos na __razão de riscos__ ou na escala de __razão de chances__.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Efeitos controlado e naturais: resumo
+
+- O $CDE(m)$ expressa o quanto o desfecho mudaria em média se o mediador fosse fixado no nível $m$ __uniformemente na população__, mas o tratamento fosse alterado do nível $x = 0$ para o nível $x = 1$.
+- O $NDE$ captura qual seria o efeito da exposição sobre o desfecho __se desativássemos o caminho da exposição ao mediador__.
+- O $NIE$ captura o efeito da exposição sobre o desfecho que __opera mudando o mediador__.
+    - Enquanto os efeitos diretos controlados são frequentemente de maior interesse na __avaliação de políticas__ porque consideram qual seria o efeito da exposição se intervíssemos no mediador em toda a população, os efeitos direto e indiretos natural podem ser de maior interesse na avaliação da ação de vários mecanismos e na importância dos diferentes caminhos e para a __decomposição do efeito__.
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Suposições para identificação dos efeitos controlado e naturais
+
+\begin{itemize}
+\item[\structure{S1.}] Ausência de confundimento não mensurado na realação $X-Y$;
+\item[\structure{S2.}] Ausência de confundimento não mensurado na realação $M-Y$;
+\item[\structure{S3.}] Ausência de confundimento não mensurado na realação $X-M$;
+\item[\structure{S4.}] Ausência de confundidor na realação $M-Y$ afetado por $X$ (ausência de confundidor intermediário).
+\end{itemize}
+
+:::
+
+\framebreak
+
+::: {.block}
+
+### Identificação dos efeitos controlado e naturais
+
+- Quando as suposições S1-S4 são válidas, então o efeito direto controlado médio e os efeitos direto e indireto naturais médios, condicionais às covariáveis $C = c$, são identificados a partir dos dados observados por
+
+\tiny
+
+\begin{eqnarray*}
+EDC(m) &=& \E[Y(1,m) - Y(0,m)|c]\\
+&=& \E[Y | X = 1, M = m, C = c)] - \E[Y | X = 0, M = m, C = c)]\\
+EDN &=& \E[Y(1,M(0)) - Y(0,M(0))|c]\\
+&=& \sum_m{\left\{\E[Y | X = 1, M = m, C = c)] - \E[Y | X = 0, M = m, C = c)]\Pr(M = m | X = 0, C = c)\right\}}\\
+EIN &=& \E[Y(1,M(1)) - Y(1,M(0))|c]\\
+&=& \sum_m{\E[Y | X = 1, M = m, C = c)]\left\{\Pr(M = m | X = 1, C = c) - \Pr(M = m | X = 0, C = c)\right\}}
+\end{eqnarray*}
+
+\normalsize
+
+:::
+
+\framebreak
+
+- Uma abordagem bastante comum para a estimação dos efeitos direto e indireto se dá através da especificação de um \structure{modelo para o desfecho} $\E[Y | x, m, c]$ e um \structure{modelo para o mediador} $Pr(m | x, c)$ e então \structure{calcular analiticamente} a expressão do lado direito das equações acima.
+    - Se mudarmos os modelos, teremos que passar por um novo cálculo.
+- No entanto, como as expressões acima são muito gerais e não pressupõem nenhum modelo estatístico específico, às vezes são chamadas de \structure{``não paramétricas''}.
+
+\framebreak
+
+- Essa abordagem contrafactual é, portanto, \structure{completamente geral} em termos dos modelos que pode acomodar.
+    - Poderíamos especificar modelos diferentes envolvendo termos quadráticos, ou outras interações ou não linearidades adicionais, e ainda poderíamos usar as fórmulas acima para derivar os efeitos diretos e indiretos.
+    - No entanto, cada vez que uma forma funcional diferente para o modelo é considerada, precisaríamos fazer uma nova derivação.
+
+\framebreak
+
+- Ainda, para alguns casos (de acordo com as especificações dos modelos) não existe forma fechada para a solução analítica.
+    + Solução analítica aproximada;
+    + Solução aproximada por simulação estocástica.
+- Por fim, intervalos de confiança podem ser construídos pelo método delta ou _bootstrap_.
+
+\framebreak
+
+::: {.block}
+
+### Exemplo: normalidade + linearidade
+
+\footnotesize
+
+\begin{align*}
+M &= \alpha_2 + \beta_2X + \epsilon_{2}\\
+Y &= \alpha_3 + \beta_3X + \gamma M + \epsilon_{3}
+\end{align*}
+
+\begin{align*}
+EDN &= \int_m\{(\alpha_3+\beta_3+\gamma m) - (\alpha_3+\gamma m)\} \times f_M(m|X=0) dm\\
+&=\beta_3\int_mf_M(m|X=0) = \beta_3.
+\end{align*}
+
+\begin{align*}
+EIN &= \int_m(\alpha_3+\beta_3+\gamma m)\{f_M(m|X=1) - f_M(m|X=0)\} dm\\
+&=\alpha_3+\beta_3+\gamma\E[M|X=1] - (\alpha_3+\beta_3+\gamma\E[M|X=1])\\
+&=\gamma(\alpha_2+\beta_2)-\gamma\alpha_2=\gamma\beta_2.
+\end{align*}
+
+\normalsize
+
+:::
+
+# Pacotes estatísticos
+
+## Pacotes para análise de mediação causal {.allowframebreaks}
+
+- Pacotes em `R`
+    + `mediation` [@mediation_package_2014]
+    + `medflex` [@medflex_package_2017]
+- `SAS`
+    + `PROC CAUSALMED`
+- `Stata`
+    + `paramed` [@emsley_paramed_2013]
+
+# Exemplo
+
+## Escolaridade materna e diabetes {.allowframebreaks}
+
+\begin{figure}[!ht] 
+  \centering
+\begin{tikzpicture}
+% nodes %
+\node[text centered] (x) {\begin{tabular}{c}
+\emph{Escolaridade}\\ \emph{materna}\
+\end{tabular}
+};
+%\node[right = 1.5 of z, text centered] (t) {$T$};
+\node[right = 3 of x, text centered] (y) {\begin{tabular}{c}
+\emph{Diabetes na}\\ \emph{vida adulta}\
+\end{tabular}
+};
+\node[above = 1.5 of {$(x)!0.5!(y)$}, text centered] (m) {\begin{tabular}{c}
+\emph{Posição}\\ \emph{socioeconômica}\
+\end{tabular}
+};
+ 
+% edges %
+\draw[->, line width= 1] (x) --  (y);
+\draw[->, line width= 1] (x) --  (m);
+\draw[->, line width= 1] (m) --  (y);
+\end{tikzpicture}
+\end{figure}
+
+\framebreak
+
+\begin{itemize}
+\item Dados de 13.629 participantes (1.497 (11\%) com Diabetes) de Onda 2 do Estudo Longitudinal de Saúde do Adulto (ELSA-Brasil).
+\item Escolaridade materna: 1$^{o}$ grau completo ou mais $=$ 11.551 (87\%); Nunca frequentou a escola $=$ 1.765 (13\%).
+\item Posição socioeconômica (vida adulta): escore criado a partir de variáveis como renda, escolaridade atual e natureza da ocupação.
+\end{itemize}
+
+\begin{align*}
+M &= \alpha_2 + \beta_2X + \epsilon_{2}\\
+\Pr(Y = 1) &= \Phi(\alpha_3 + \beta_3X + \gamma M).
+\end{align*}
+
+- $EDN$ e $EIN$ estimados por simulação (pacote `mediation`).
+
+\framebreak
+
+\begin{table}[ht]
+\centering
+\caption{Media\c{c}\~{a}o simples: Primeiro grau incompleto ou mais (0) vs. Nunca frequentou a escola (1).}
+\begin{tabular}{lrrr}
+  \hline
+Efeitos causais&Estimativa  & IC 95\% Inferior & IC 95\% Superior\\
+\hline
+Efeito Indireto Natural           &  0.0352   &   0.0287  &    0.0428\\
+Efeito Direto Natural           &  0.0172     & 0.0024  &    0.0351\\
+Efeito Total  &  0.0524    &  0.0354     & 0.0691\\
+Prop. Mediada &  0.6857    &  0.5012     & 0.9326\\
+   \hline
+\end{tabular}
+\end{table}
+
+# Considerações finais {.allowframebreaks}
+
+- Para afirmar que os efeitos são causais, não é suficiente o uso de efeitos causalmente definidos.
+    + Exige um \structure{modelo causal/teórico}.
+- Suposições para identificação dos efeitos causais são não testáveis; necessidade de \structure{análise de sensibilidade}.
+- Modelos "mais realistas":
+    + Múltiplos mediadores;
+    + Confundidoras intermediárias;
+    + Mediação e interação (decomposições tripla e quádrupla).
+
+\framebreak
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, out.width="100%", purl=FALSE, fig.align='center'}
+
+knitr::include_graphics(here::here('images', 'books.png'))
+
+```
+
+## Referências bibliográficas {.allowframebreaks}
+

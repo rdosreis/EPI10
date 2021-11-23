@@ -1,0 +1,475 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Riscos competitivos em análise de dados de sobrevivência"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2021
+---
+
+# Introdução {.allowframebreaks}
+
+## Análise de sobrevivência {.allowframebreaks}
+
+\textbf{Análise de sobrevivência} tipicamente foca em dados de \structure{tempo até o evento}. De maneira mais geral, consiste em técnicas para variáveis aleatórias positivas, tais como
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item tempo até a morte
+\item tempo até o início (ou recidiva) da doença
+\item tempo de permanência no hospital
+\item tempo de duração de uma greve
+\item medições de carga viral
+% \item tempo para terminar uma tese de doutorado!
+\end{itemize}
+
+Tipicamente, dados de sobrevivência não são completamente observados, mas são \structure{censurados}.
+
+\framebreak
+
+Estaremos interessados em estimar certas características associadas com a variável aleatória tempo até o evento, denominada por $T$, como por exemplo
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item a função \structure{sobrevivência} $S(t)=\Pr(T>t)$
+\item a função \structure{de taxa de falha} $\displaystyle\lambda(t)=\lim_{\triangle t\to 0}\frac{\Pr(t\leq T< t+\triangle t|T\geq t)}{\triangle t}$
+\item Lembrando da relação entre estas duas funções:
+$$
+\textcolor{darkpastelgreen}{S(t)=\exp\left\{-\int_0^t{\lambda(u)du}\right\}}
+$$
+\end{itemize}
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', out.height="70%", purl=FALSE}
+
+lambda <- function(t,a,b){
+  (a/b)*(t/a)^(b-1)
+}
+
+Lambda <- function(t,a,b){
+  (t/a)^(b)
+}
+
+t <- seq(0.01, 30, length=100)
+
+par(las=1,mar=c(4,4,.1,.1))  # tick labels direction
+par(mfrow = c(1, 2))
+
+plot(t, exp(-Lambda(t, a = 10,b = 2.3)),
+     main = NULL, xlab = "t", ylab = "S(t)",
+     type = "l", lwd = 2, col = "#779ecc")
+lines(t, exp(-Lambda(t, a = 10, b = 1)),
+      lwd = 2, col = "#02bf3d")
+lines(t, exp(-Lambda(t, a = 10, b = 0.8)),
+      lwd = 2, col = "#c13a21")
+
+plot(t, lambda(t, a = 10, 2.3),
+     main = NULL, xlab = "t",
+     ylab = expression(lambda(t)),
+     type = "l", lwd = 2, col = "#779ecc")
+lines(t, lambda(t, a = 10, b = 1),
+      lwd = 2, col = "#02bf3d")
+lines(t, lambda(t, a = 10, b = 0.8),
+      lwd = 2, col = "#c13a21")
+
+```
+
+\framebreak
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Descrever dados de sobrevivência 
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Estimador \structure{Kaplan-Meier}
+\end{itemize}
+\item Comparar funções de sobrevivência entre grupos
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Teste \structure{log-rank}
+\end{itemize}
+\item Explicar a sobrevivência com covariáveis
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Modelos de regressão $\Rightarrow$ \structure{Modelo de Cox}
+\end{itemize}
+\end{itemize}
+
+## Definição de riscos competitivos {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item \structure{\bf Riscos competitivos:} situação em que mais de uma causa de falha é possível.
+\item Se falhas são diferentes causas de morte, apenas a primeira destas a ocorrer é observada.
+\item Em outras situações, observações após a primeira falha podem ser observadas, mas não são de interesse.
+% \item Situação em que um indivíduo pode experimentar mais de um tipo de evento. (Kalb-Prent)
+% \item Não independência entre o tempo até o evento e o mecanismo de censura. (Gelman-Caplan)
+% \item Situação em que um tipo de evento impede a ocorrência de um outro evento ou altera a probabilidade ocorrência deste outro evento. (Gooley)
+\end{itemize}
+\vspace{4 mm}
+
+\begin{figure}[!ht] 
+  \centering
+\setlength{\unitlength}{0.6mm}
+\begin{picture}(50,50)
+\put(0,25){\vector(1,1){30}}
+\put(0,25){\vector(1,-1){30}}
+\put(0,25){\vector(2,1){30}}
+\put(0,25){\vector(2,-1){30}}
+\put(0,25){\vector(1,0){30}}
+\put(0,25){\circle*{1}}
+\put(-35,25){\footnotesize{Livre de evento}}
+\put(40,25){$\vdots$}
+\put(32,55){Causa $1$}
+\put(32,40){Causa $2$}
+\put(32,10){Causa $m-1$}
+\put(32,-5){Causa $m$}
+\end{picture}
+\caption[]{Situação de riscos competitivos com $m$ causas de falhas.}
+\label{fig:compriskgraph}
+\end{figure}
+
+## Exemplos {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item O tempo até o diagnóstico de uma certa doença (\structure{demência por Alzheimer}). 
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item A morte antes da doença é um risco concorrente.
+\end{itemize}
+\item Em estudos de câncer, a morte por câncer pode ser de interesse, e morte por outras causas (mortalidade cirúrgica, idade avançada) são riscos concorrentes.
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Por outro lado, pode-se estar interessado em tempo até a recidiva, em que a morte por qualquer causa é um risco concorrente.
+\item Outra possibilidade, é que estajamos interessados no tempo até a morte por um tipo de câncer em específico, e mortes por outros tipos de câncer são riscos concorrentes.
+\end{itemize}
+\item O tempo até a morte por evento cardíaco, em que outras causas de morte estão presentes, e portanto são riscos concorrentes.
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item \structure{Populações mais velhas.}
+\end{itemize}
+\end{itemize}
+
+# Eventos concorrentes $\Rightarrow$ Riscos competitivos {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item A introdução de novas técnicas para análise de dados de sobrevivência sujeitos a riscos competitivos se faz necessária, pois as antigas técnicas consideram que eventos ocorridos pelas demais causas, que não a de interesse, são observações \structure{censuradas}.
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Por observação censurada (\structure{a direita}) entendemos que o evento ocorrerá após o último tempo observado.
+\item No exemplo de tempo até o diagnóstico de demência por Alzheimer, quando um indivíduo morre antes do evento de interesse, ele não pode mais experimentar o evento.
+\end{itemize}
+\end{itemize}
+
+## Formulação básica {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Seja $T$ o tempo até o evento e $D$ a causa do evento. A função de taxa de falha \structure{de causa específica} da $j$-ésima causa é definida por
+$$
+\lambda_j(t)=\lim_{\triangle t\to 0}\frac{\Pr(t\leq T< t+\triangle t, D=j|T\geq t)}{\triangle t},\ j=1,\ldots,m.
+$$
+\item A respectiva função de taxa de falha acumulada de causa específica é definida por
+$$
+\Lambda_j(t)=\int_0^t{\lambda_j(u)du}.
+$$
+\begin{itemize}
+\item A função $S_j(t)=\exp\left\{-\Lambda_j(t)\right\}$ não deve ser interpretada como uma função de sobrevivência marginal.
+\end{itemize}
+\item As funções de \structure{taxa de falha geral} $\lambda(t)$ e \structure{sobrevivência} $S(t)$ são definidas em termos das funções de taxa de falha de causa específica
+\begin{eqnarray*}
+\lambda(t)&=&\lim_{\triangle t\to 0}\frac{\Pr(t\leq T< t+\triangle t|T\geq t)}{\triangle t}\\
+&=&\lim_{\triangle t\to 0}\frac{1}{\triangle t}\Pr\left(\bigcup_{j=1}^m\{t\leq T< t+\triangle t,D=j\}|T\geq t\right)\\
+&=&\sum_{j=1}^m{\lim_{\triangle t\to 0}\frac{1}{\triangle t}\Pr(t\leq T< t+\triangle t,D=j|T\geq t)}=\sum_{j=1}^m{\lambda_j(t)},\\
+S(t)&=&\exp\left\{-\int_0^t{\lambda(u)du}\right\}=
+% \exp\left\{-\int_0^t{\sum_{j=1}^m{\lambda_j(u)}du}\right\}\\
+% &=&\exp\left\{-\sum_{j=1}^m{\int_0^t{\lambda_j(u)}du}\right\}=
+\exp\left\{-\sum_{j=1}^m{\Lambda_j(t)}\right\}.
+\end{eqnarray*}
+\begin{itemize}
+\item A função de sobrevivência geral tem a seguinte interpretação:
+ é a probabilidade de não ocorrência de evento por qualquer uma das causas até o tempo $t$.
+\end{itemize}
+\item A \structure{função incidência acumulada} da causa $j$, $I_j(t)$, é definida por
+$$
+I_j(t)=\Pr(T\leq t, D=j)=\int_0^t{\lambda_j(u)S(u)du},\ j=1,\ldots,m,
+$$
+e representa a \structure{probabilidade de um indivíduo falhar pela causa $j$ na presença de todos os riscos concorrentes}.
+\item O estimador Kaplan-Meier da probabilidade de falhar devido a causa $j$ até o tempo $t$ satisfaz
+$$
+1-S_j(t)=\int_0^t{\lambda_j(u)S_j(u)du}.
+$$
+\item Note que $\Lambda_j(t)\geq0,\ j=1,\ldots,m$, e assim
+\begin{eqnarray*}
+\Lambda_j(t) &\leq& \sum_{j=1}^m{\Lambda_j(t)},\\
+S_j(t)=\exp\left\{-\Lambda_j(t)\right\} &\geq& \exp\left\{-\sum_{j=1}^m{\Lambda_j(t)}\right\}=S(t),\\
+\end{eqnarray*}
+logo
+$$
+I_j(t)=\int_0^t{\lambda_j(u)S(u)du}\leq \int_0^t{\lambda_j(u)S_j(u)du}=1-S_j(t).
+$$
+\item Isto mostra o viés do estimador de Kaplan-Meier, se este é usado para estimar $I_j(t)$.
+\end{itemize}
+
+# Métodos não paramétricos
+
+## Estimação da função incidência acumulada {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Seja $0 < t_1 < t_2 < \ldots < t_n$ os tempos distintos observados de falha por qualquer causa.
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item $d_{jk}$ é o número de indivíduos que falharam da causa $j$ no tempo $t_k$.
+\item $d_{k}=\sum_{j=1}^m{d_{jk}}$ é o número total de falhas (\structure{qualquer causa}) no  tempo $t_k$.
+\item $n_k$ é o número de indivíduos em risco (\structure{indivíduos ainda presentes no estudo que não falharam por qualquer causa}) no tempo $t_k$.
+\end{itemize}
+\item A função incidência acumulada da causa $j$ no tempo $t$ pode ser estimada por
+$$
+\hat{I}_j(t)=\sum_{k:t_k\leq t}{\hat{\lambda}_j(t_k)\hat{S}(t_{k-1})},
+$$
+em que $\displaystyle\hat{\lambda}_j(t_k)=\frac{d_{jk}}{n_k}$ e $\displaystyle\hat{S}(t)=\prod_{k:t_k\leq t}{\left(1-\sum_{j=1}^m{\hat{\lambda}_j(t_k)}\right)}$.
+\end{itemize}
+
+## Dados de gamopatia monoclonal {.allowframebreaks}
+
+História natural de 241 indivíduos com gamopatia monoclonal de significado indeterminado (MGUS).
+
+- `mgus`: A data frame with 241 observations on the following 12 variables.
+    - `id`:	subject id
+    - `age`:	age in years at the detection of MGUS
+    - `sex`:	male or female
+    - `dxyr`:	year of diagnosis
+    - `pcdx`:	for subjects who progress to a plasma cell malignancy the subtype of malignancy: multiple myeloma (MM) is the most common, followed by amyloidosis (AM), macroglobulinemia (MA), and other lymphprolifative disorders (LP)
+    - `pctime`:	days from MGUS until diagnosis of a plasma cell malignancy
+    - `futime`:	days from diagnosis to last follow-up
+    - `death`:	1= follow-up is until death
+    - `alb`:	albumin level at MGUS diagnosis
+    - `creat`:	creatinine at MGUS diagnosis
+    - `hgb`:	hemoglobin at MGUS diagnosis
+    - `mspike`:	size of the monoclonal protein spike at diagnosis
+- `mgus1`: The same data set in start,stop format. Contains the id, age, sex, and laboratory variable described above along with
+    - `start`, `stop`:	sequential intervals of time for each subject
+    - `status`:	=1 if the interval ends in an event
+    - `event`:	a factor containing the event type: censor, death, or plasma cell malignancy
+    - `enum`:	event number for each subject: 1 or 2
+
+\framebreak
+
+\footnotesize
+
+```{r echo=TRUE, purl=TRUE}
+
+library(survival)
+
+head(mgus1[c("id","sex","start","stop","status","event")])
+
+```
+
+```{r echo=TRUE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', purl=TRUE}
+
+fitKM <- survfit(Surv(time = stop, event == 'pcm') ~ 1,
+                 data = mgus1, subset = (start == 0))
+
+fitCI <- survfit(Surv(time = stop, event = status*as.numeric(event),
+                      type = "mstate") ~ 1,
+                    data = mgus1, subset = (start == 0))
+
+plot(fitCI, xscale = 365.25, xmax = 7300,
+     mark.time = FALSE, col = c("red", "grey"),
+     xlab = "Anos desde o diagnóstico de MGUS")
+lines(fitKM, fun = 'event', xscale = 365.25,
+      xmax = 7300, mark.time = FALSE, conf.int = FALSE)
+text(x = 10*365.25, y = .4, "Risco competitivo: óbito",
+     col = "grey")
+text(x = 16*365.25, .15,"Risco competitivo: progressão",
+     col = "red")
+text(x = 15*365.25, .30, "KM: prog")
+
+```
+
+\normalsize
+
+## Comparação de funções incidência acumulada entre grupos {.allowframebreaks}
+
+- \structure{Gray (1988)}\footnote{Robert J. Gray. A class of k-sample tests for comparing the cumulative incidence of a competing risk. \emph{The Annals of Statistics}, 16:1141–1154, 1988.} desenvolveu um tipo de teste _log-rank_ para testar a igualdade de curvas de incidência acumulada.
+    - Pacote `cmprsk` do `R`.
+
+\footnotesize
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+library(cmprsk)
+
+mgus1 <- subset(mgus1, start == 0)
+mgus1$evtype <- mgus1$status * as.numeric(mgus1$event)
+
+fitCI <- cuminc(ftime = mgus1$stop,
+                fstatus = mgus1$evtype,
+                group = mgus1$sex, cencode = 0)
+
+```
+
+\normalsize
+
+## Comparação de funções incidência acumulada entre grupos {.allowframebreaks}
+
+- Óbito = 3;
+- Progressão = 2.
+
+\footnotesize
+
+```{r echo=TRUE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', purl=TRUE}
+
+fitCI$Tests
+
+```
+
+```{r echo=TRUE, fig.align='center', message=FALSE, warning=FALSE, out.width='70%', purl=TRUE}
+
+plot(fitCI,
+     col = c("dodgerblue3", "blue",
+             "lightsalmon1", "red"),
+     lwd = 2, lty = 1,
+     xlab = "tempo (dias)", ylab = "Probabilidade")
+
+```
+
+\normalsize
+
+# Modelos de riscos competitivos
+
+## Modelo de Cox de causa específica {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item Para identificar potenciais fatores de risco para uma falha de \structure{causa específica}, podemos utilizar o modelo de Cox, onde este modela a função de taxa de falha de causa específica
+$$
+\lambda_j(t) = \lambda_{0j}(t)\exp\{x_1\beta_1 + \ldots + x_p\beta_p\}.
+$$
+\end{itemize}
+
+\footnotesize
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+fitcph1 <- coxph(Surv(time = stop,
+                      event = evtype == 2) ~ sex + age,
+                 data=mgus1)
+summary(fitcph1)$coef
+
+```
+
+\framebreak
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+fitcph2 <- coxph(Surv(time = stop, event = evtype == 3) ~ sex + age,
+                 data = mgus1)
+summary(fitcph2)$coef
+
+```
+
+\framebreak
+
+\normalsize
+
+- O pacote `riskRegression`, por meio da função `CSC`, "envelopa" os ajustes dos modelos de Cox de causa específica:
+
+\footnotesize
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+library(riskRegression)
+
+fitcox <- CSC(Hist(stop, evtype) ~ sex + age,
+              data = mgus1)
+```
+
+\framebreak
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+print(fitcox)
+
+```
+
+\framebreak
+
+\normalsize
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item A função de taxa de falha de causa específica não possui uma interpretação direta em termos de probabilidade de sobrevivência para um tipo de falha em particular.
+\item O efeito da covariável na função de taxa de falha pode ser muito diferente do efeito da covariável na função incidência acumulada.
+\end{itemize}
+
+## Modelo de Fine e Gray {.allowframebreaks}
+
+\begin{itemize}\setlength{\itemsep}{+2mm}
+\item \structure{Fine e Gray (1999)}\footnote{Jason P. Fine and Robert J. Gray. A proportional hazards model for the subdistribution of a competing risk. \emph{Journal of the American Statistical
+Association}, 94:496–509, 1999.} introduziram um modelo que relaciona diretamente as covariáveis a função incidência acumulada. Seja 
+$$
+\bar{\lambda}_1(t)=-\frac{d}{dt}\left[\log(1-I_1(t))\right],
+$$
+a função \structure{\emph{subdistribution hazard}}. Dado um conjunto de covariáveis, o modelo assume a seguinte forma
+$$
+\bar{\lambda}_1(t)=\bar{\lambda}_{1,0}(t)\exp\{x_1\beta_1+\ldots+x_p\beta_p\}.
+$$
+\item Desta forma, temos
+$$
+I_1(t)=1-\exp\left\{-\exp\{x_1\beta_1+\ldots+x_p\beta_p\}\int_0^t{\bar{\lambda}_{1,0}(u)du}\right\}.
+$$
+\end{itemize}
+
+## Modelos de riscos competitivos: Modelo de Fine e Gray {.allowframebreaks}
+
+- A função `FGR` do pacote `riskRegression` estima os coeficientes de regressão do modelo de Fine e Gray.
+
+\footnotesize
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+fitfg <- FGR(prodlim::Hist(stop, evtype) ~ sex + age,
+             data = mgus1, cause = 2)
+```
+
+\framebreak
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, purl=TRUE}
+
+print(fitfg)
+
+```
+
+# Considerações finais do curso {.allowframebreaks}
+
+\normalsize
+
+- A análise de sobrevivência é uma grande área de estudo na (bio)estatística.
+- Neste curso enfocamos nas técnicas e modelos mais utilizados, bem como em suas aplicações.
+- Nem sempre estas técnicas e modelos serão adequados para o problema de estudo:
+    + Não responde a questão de investigação;
+    + As suposições não são razoáveis;
+    + Os modelos não se ajustam aos dados.
+
+\framebreak
+
+- Nestes casos, técnicas e modelos avançados em análise de sobrevivência existem (e estão a se desenvolver) na literatura da área.
+- Algumas destas técnicas envolvem:
+    + Modelos aditivos;
+    + Censura intervalar;
+    + Modelos discretos;
+    + Eventos recorrentes;
+    + Processos de contagem;
+    + Modelos de efeitos aleatórios;
+    + Censura dependente.
+    
+## Para casa
+
+- Atividade de avaliação II.
+    + Será postada no Moodle logo em seguida.
+    + O professor está a disposição para esclarecimento de dúvidas com relação à atividade.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos! Bom final de ano! Até a próxima!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-barras02.jpg'))
+
+```
+
