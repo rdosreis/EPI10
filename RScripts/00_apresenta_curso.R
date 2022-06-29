@@ -4,23 +4,36 @@ knitr::include_graphics(here::here('images', 'hi_my_name_is.png'))
 
 
 
-## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', paged.print=FALSE----
-knitr::include_graphics(here::here('images','videoaula-2.png'))
+## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', paged.print=FALSE----
+
+knitr::include_graphics(here::here('images','covid-recomendacoes.jpg'))
+
 
 
 ## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='10%', paged.print=FALSE----
+
 knitr::include_graphics(here::here('images','Rlogo.png'))
 
 
-## ---- echo=FALSE, eval=TRUE--------------------------------------------------------------------
 
-x <- rnorm(n = 100, mean = 10, sd = 1)
+## ---- echo=TRUE, eval=TRUE--------------------------------------------------------------------
+
+library(survival)
+
+fit1 <- survfit(Surv(futime,fustat) ~ resid.ds,
+                data = ovarian)
 
 
 
-## ---- echo=TRUE, eval=TRUE, fig.align='center', out.width='50%'--------------------------------
+## ---- echo=FALSE, eval=TRUE, fig.align='center', out.width='70%'------------------------------
 
-hist(x, col = 'black', border = 'white')
+plot(fit1, col = 1:2, xscale = 365.25,
+     lwd = 2, mark.time = TRUE,
+     xlab = "Years since study entry",
+     ylab = "Survival")
+legend(750, .9,
+       c("No residual disease", "Residual disease"),
+       col = 1:2, lwd = 2, bty = 'n')
 
 
 
@@ -49,30 +62,6 @@ knitr::include_graphics(here::here('images', 'ecr-01.jpg'))
 ## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE----
 
 knitr::include_graphics(here::here('images', 'ecr-02.jpg'))
-
-
-
-## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE----
-
-knitr::include_graphics(here::here('images', 'graunt.jpg'))
-
-
-
-## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE----
-
-knitr::include_graphics(here::here('images', 'huygens.jpg'))
-
-
-
-## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE----
-
-knitr::include_graphics(here::here('images', 'cox.jpg'))
-
-
-
-## ----echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='70%', paged.print=FALSE----
-
-knitr::include_graphics(here::here('images', 'counting.png'))
 
 
 
