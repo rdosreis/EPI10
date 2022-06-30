@@ -19,13 +19,12 @@ knitr::include_graphics(here::here('images','Rlogo.png'))
 ## ---- echo=TRUE, eval=TRUE--------------------------------------------------------------------
 
 library(survival)
-
 fit1 <- survfit(Surv(futime,fustat) ~ resid.ds,
                 data = ovarian)
 
 
 
-## ---- echo=FALSE, eval=TRUE, fig.align='center', out.width='70%'------------------------------
+## ---- echo=FALSE, eval=TRUE, fig.align='center', out.width='60%'------------------------------
 
 plot(fit1, col = 1:2, xscale = 365.25,
      lwd = 2, mark.time = TRUE,
