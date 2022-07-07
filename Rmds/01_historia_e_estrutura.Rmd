@@ -1,6 +1,6 @@
 ---
 title: "EPI10 - Análise de Sobrevivência"
-subtitle: "Apresentações"
+subtitle: "Estrutura dos dados em análise de sobrevivência"
 fontsize: 10pt
 author: |
   | Rodrigo Citton P. dos Reis
@@ -144,16 +144,16 @@ knitr::include_graphics(here::here('images', 'counting.png'))
 
 - Dadas as diferentes ênfases na variedade de recursos, a análise de sobrevivência também é conhecida como \structure{análise de duração}, \structure{análise de tempo até o evento}, \structure{análise de histórico de eventos} ou \structure{análise de dados de confiabilidade}.
 
-## Próxima aula
+<!-- ## Próxima aula -->
 
-- Caracterização dos dados de sobrevivência
-- Exemplos
-- Especificação dos tempos de sobrevivência
+<!-- - Caracterização dos dados de sobrevivência -->
+<!-- - Exemplos -->
+<!-- - Especificação dos tempos de sobrevivência -->
 
 ## Por hoje é só!
 
 \begin{center}
-{\bf Sejam tod@s bem-vind@s!}
+{\bf Bons estudos!}
 \end{center}
 
 ```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE}
