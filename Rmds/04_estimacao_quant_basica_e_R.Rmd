@@ -1,0 +1,291 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Estimação da curva de sobrevivência (continuação)"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2022
+---
+
+# Estimadores de $S(t)$ {.allowframebreaks}
+
+- Dois outros estimadores para a função de sobrevivência $S(t)$ são muito citados na literatura:
+    + O estimador de Nelson-Aalen
+    + O estimador atuarial (da tabela de vida)
+
+- Não vamos estudá-los. Mas, faremos algumas considerações a respeito destes dois estimadores em comparação com o estimador de Kaplan-Meier.
+
+\framebreak
+
+- A grande diferença entre os estimadores de $S(t)$ está no número de intervalos utilizados para a construção de cada um deles.
+    - O estimador de Kaplan-Meier e o de Nelson-Aalen são sempre baseados em um número de intervalos igual ao número de tempos de falha distintos, enquanto que na tabela de vida, os tempos de falha são agrupados em intervalos de forma arbitrária.
+    - Isto faz com que a estimativa obtida pelo estimador de Kaplan-Meier seja baseada frequentemente em um número de intervalos maior que a estimativa obtida através da tabela de vida.
+
+\framebreak
+
+- O uso da tabela de vida, considerando um número igual ou maior de intervalos que o do estimador de Kaplan-Meier, gera estimativas exatamente iguais às estimativas de Kaplan-Meier se o \structure{mecanismo de censura} for do \structure{tipo I} ou \structure{II}.
+- Entretanto, se o \structure{mecanismo de censura} for do \structure{tipo aleatório}, as estimativas serão próximas mas não necessariamente coincidentes.
+
+\framebreak
+
+- Alguns autores estudaram as propriedades assintóticas dos dois estimadores. Estes estudos mostraram a \structure{superioridade do estimador de Kaplan-Meier}.
+- Ele é um estimador não-viciado para a função de sobrevivência em grandes amostras, enquanto o estimador da tabela de vida não o é, com um vício que fica pequeno à medida que o comprimento dos intervalos diminuem.
+- Com amostras de pequeno ou médio porte, existe alguma evidência empírica também da superioridade do estimador de Kaplan-Meier.
+- Desta forma, o \structure{mais indicado} é então usar o estimador de \structure{Kaplan-Meier} ou eventualmente o de Nelson-Aalen, quando o interesse se concentrar em informações provenientes da função de sobrevivência.
+
+# Estimação de quantidades básicas {.allowframebreaks}
+
+```{r dados, echo=FALSE, message=FALSE, warning=FALSE}
+
+tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16,
+            16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10,
+            10, 12, 16, 16, 16)
+
+cens <- c(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1,
+          0, 0, 0, 0, 0)
+
+grupo <- factor(c(rep("Controle", 15), rep("Esteroide", 14)))
+
+df.hep <- data.frame(tempo, cens, grupo)
+
+```
+
+- A utilização direta da curva de Kaplan-Meier nos informa a probabilidade estimada de sobrevivência para um determinado tempo.
+- Um exemplo é a probabilidade do indivíduo sobreviver a 10 semanas de tratamento. A estimativa de Kaplan-Meier para este valor é diretamente obtida do gráfico e é igual a 44%.
+
+\framebreak
+
+```{r km.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+# Carregando pacote
+
+library(survival)
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ 1,
+               data = df.hep,
+               subset = grupo == "Esteroide",
+               conf.type = "log-log")
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+segments(x0 = 10, y0 = 0, x1 = 10, y1 = summary(ekm, times = 10)$surv, col = "red", lwd = 2)
+arrows(x0 = 10, y0 = summary(ekm, times = 10)$surv, x1 = 0,
+       y1 = summary(ekm, times = 10)$surv, col = "red", lwd = 2)
+axis(side = 1, at = 10, labels = 10, tick = T, col = "red", col.axis = "red")
+axis(side = 2, at = summary(ekm, times = 10)$surv,
+     labels = round(summary(ekm, times = 10)$surv, 2), tick = T, col = "red", col.axis = "red")
+
+```
+
+\framebreak
+
+- Se o valor do tempo de interesse estiver ao longo de um degrau da curva de Kaplan-Meier, como $t = 4$, pode-se também utilizar
+
+\footnotesize
+
+```{r km.summary, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(ekm, times = 4)
+
+summary(ekm, times = c(4, 6, 7, 12))
+
+```
+
+\normalsize
+
+\framebreak
+
+- A partir da curva de Kaplan-Meier também é possível obter estimativas de percentis. Uma informação muito útil é o \structure{tempo mediano de vida}.
+- A mediana do tempo de sobrevivência é o tempo $t_{0.5}$ que divide os tempos de sobrevivência em duas partes iguais: 
+    - 50% dos indivíduos com tempos de sobrevivência menores estão abaixo de $\widehat{t}_{0.5}$;
+    - 50% dos indivíduos com maiores tempos de sobrevivência estão acima de $\widehat{t}_{0.5}$.
+- Ou seja, $S(t_{0.5}) = 0.5$.
+    - No entanto, o estimador de Kaplan-Meier de $S(t)$ é uma função escada, e geralmente não é possível obter uma estimativa para $t_{0.5}$ tal que $\widehat{S}(\widehat{t}_{0.5}) = 0.5$^[Em verdade, podemos obter múltiplas estimativas.].
+
+## Estimação de quantidades básicas {.allowframebreaks}
+
+- Assim, o estimador do tempo mediano, $\widehat{t}_{0.5}$ é definido como o __menor tempo de sobrevivência observado__ tal que a estimativa da função $S(t)$ é menor ou igual a 0.5, isto é,
+
+$$
+\widehat{t}_{0.5} = \min\left\{t_i | \widehat{S}(t_i) \leq 0.5 \right\}.
+$$
+
+\framebreak
+
+```{r km.mediana, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+segments(x0 = 0, y0 = 0.5, x1 = 10, y1 = 0.5, col = "red", lwd = 2)
+arrows(x0 = 10, y0 = 0.5, x1 = 10, y1 = 0, col = "red", lwd = 2)
+axis(side = 1, at = 10, labels = 10, tick = T, col = "red", col.axis = "red")
+axis(side = 2, at = 0.5, labels = 0.5, tick = T, col = "red", col.axis = "red")
+
+```
+
+\framebreak
+
+- Uma solução análoga é obtida para estimar o intervalo de confiança do $t_{0.5}$.
+
+```{r km.mediana.ic, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='80%'}
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+segments(x0 = 0, y0 = 0.5, x1 = 10, y1 = 0.5, col = "red", lwd = 2)
+arrows(x0 = 10, y0 = 0.5, x1 = 10, y1 = 0, col = "red", lwd = 2)
+segments(x0 = 0, y0 = 0.5, x1 = 16, y1 = 0.5, col = "red", lwd = 2, lty = 2)
+arrows(x0 = 1, y0 = 0.5, x1 = 1, y1 = 0, col = "red", lwd = 2, lty = 2)
+axis(side = 1, at = c(1, 10), labels = c(1, 10), tick = T, col = "red", col.axis = "red")
+axis(side = 2, at = 0.5, labels = 0.5, tick = T, col = "red", col.axis = "red")
+
+```
+
+\framebreak
+
+- Em amostras pequenas, e/ou com poucos eventos, é possível que a mediana e/ou os limites do intervalo de confiança não sejam obtidos.
+    + Algumas soluções alternativas foram propostas na literatura, tais como o uso de métodos de reamostragem (_bootstrap_).
+
+\footnotesize
+
+```{r km.mediana.estimativa, echo=TRUE, message=FALSE, warning=FALSE}
+
+ekm
+
+```
+
+\normalsize
+
+# `R`: o pacote `survminer` {.allowframebreaks}
+
+- Como vimos anteriormente, o principal pacote em `R` para análise de sobrevivência é o `survival`.
+
+\footnotesize
+
+```{r survival, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(survival)
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.hep,
+               conf.type = "log-log")
+
+```
+
+\normalsize
+
+- Outros pacotes podem nos ajudar no ajuste de modelos e apresentação dos resultados. Este é o caso do pacote `survminer`.
+
+\framebreak
+
+\footnotesize
+
+```{r ggsurv, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='70%'}
+
+# install.packages("survminer")
+
+library(survminer)
+
+ggsurvplot(fit = ekm, data = df.hep)
+
+```
+
+\normalsize
+
+\framebreak
+
+\footnotesize
+
+```{r ggsurvsintax, echo=TRUE, eval=FALSE, message=FALSE, warning=FALSE}
+
+ggsurvplot(
+  fit = ekm,
+  data = df.hep,
+  size = 1,                 # change line size
+  palette =
+    c("#E7B800", "#2E9FDF"),# custom color palettes
+  conf.int = TRUE,          # Add confidence interval
+  pval = TRUE,              # Add p-value
+  risk.table = TRUE,        # Add risk table
+  risk.table.col = "strata",# Risk table color by groups
+  legend.labs =
+    c("Controle", "Esteroide"),    # Change legend labels
+  risk.table.height = 0.25, # Useful to change when you have multiple groups
+  ggtheme = theme_bw()      # Change ggplot2 theme
+)
+
+```
+
+\normalsize
+
+\framebreak
+
+```{r ggsurvplot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ggsurvplot(
+  fit = ekm,
+  data = df.hep,
+  size = 1,                 # change line size
+  palette =
+    c("#E7B800", "#2E9FDF"),# custom color palettes
+  conf.int = TRUE,          # Add confidence interval
+  pval = TRUE,              # Add p-value
+  risk.table = TRUE,        # Add risk table
+  risk.table.col = "strata",# Risk table color by groups
+  legend.labs =
+    c("Controle", "Esteroide"),    # Change legend labels
+  risk.table.height = 0.25, # Useful to change when you have multiple groups
+  ggtheme = theme_bw()      # Change ggplot2 theme
+)
+
+```
+
+# Avisos
+
+## Para casa
+
+1. Repita os exemplos da aula.
+
+## Próxima aula
+
+- Comparação de curvas de sobrevivência.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-ff.jpg'))
+
+```
+

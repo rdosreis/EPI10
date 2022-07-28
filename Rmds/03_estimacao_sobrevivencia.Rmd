@@ -39,7 +39,7 @@ date: |
 
 - O histograma a seguir representa a distribuição dos tempos até um certo evento de um grupo de 54 indivíduos, em que o evento ocorreu para todos os elementos do grupo __(observações não censuradas)__.
 
-```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE, purl=FALSE}
 
 knitr::include_graphics(here::here('images', 'histograma_sem_censura.png'))
 
