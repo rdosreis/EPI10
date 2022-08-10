@@ -1,0 +1,339 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Comparação de funções de sobrevivência"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2022
+---
+
+# Relembrando {.allowframebreaks}
+
+__Estudo de Hepatite__
+
+\footnotesize
+
+\begin{table}[]
+\begin{tabular}{ll}
+\hline
+Grupo     & Tempo de sobrevivência em semanas                                \\ \hline
+Controle  & 1+, 2+, 3, 3, 3+, 5+, 5+, 16+, 16+, 16+, 16+, 16+, 16+, 16+, 16+ \\
+Esteroide & 1, 1, 1, 1+, 4+, 5, 7, 8, 10, 10+, 12+, 16+, 16+, 16+            \\ \hline
+\end{tabular}
+\end{table}
+
+```{r dados, echo=FALSE, message=FALSE, warning=FALSE}
+
+tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16,
+            16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10,
+            10, 12, 16, 16, 16)
+
+cens <- c(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1,
+          0, 0, 0, 0, 0)
+
+grupo <- factor(c(rep("Controle", 15), rep("Esteroide", 14)))
+
+df.hep <- data.frame(tempo, cens, grupo)
+
+# install.packages("survival")
+
+# Carregando pacote
+library(survival)
+
+# Dados do exemplo
+
+# head(df.hep)
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.hep,
+               conf.type = "log-log")
+
+```
+
+\normalsize
+
+\framebreak
+
+```{r km.grupo.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = TRUE, 
+     mark.time = TRUE,
+     col = c("black", "red"), 
+     lwd = 2, xlab = "Tempo (semanas)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+legend("bottomleft",
+       c("Controle", "Esteroide"), 
+       col = c("black", "red"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+- \structure{Pergunta:} as funções de sobrevivência do grupo Controle e Esteroide diferem?
+
+- Em outras palavras, como podemos testar \structure{$S_1(t) = S_2(t)$}.
+    + Os intervalos de confiança construídos anteriormente {são pontuais}. Ou seja, para cada ponto $t$ temos um intervalo de $100(1- \alpha)\%$ confiança para $S(t)$. Mas, este coeficiente de confiança não é garantido quando olhamos para a "curva toda".
+- O teste de \structure{\emph{log-rank}}\footnote{Mantel N. Evaluation of survival data and two new rank order statistics arising in its consideration. \emph{Cancer Chemotherapy Reports}. 1966 Mar;50(3):163-70.} pode responder esta questão adequadamente.
+
+\framebreak
+
+### Teste log-rank
+
+- Se as $k$ tabelas de contingência forem independentes, um teste aproximado para a igualdade das duas funções de sobrevivência pode ser baseado na estatística
+
+$$
+\chi^2_{LR} = \frac{[\sum_{j=1}^k{(d_{2j}-\overline{D}_{2j})}]^2}{\sum_{j=1}^k{V(D_{2j})}}
+$$
+
+- Sob a hipótese nula \structure{$H_0:S_1(t)=S_2(t)$ para todo o $t$}, em grandes amostras, tem uma \structure{distribuição aproximada qui-quadrado com 1 grau de liberdade}.
+
+# Teste log-rank: comparação de mais que dois grupos {.allowframebreaks}
+
+- A generalização do teste \structure{log-rank} avaliar a hipótese de igualdade entre \structure{$S_1(t), S_2(t), \ldots, S_r(t)$}, \structure{$r > 2$}.
+    + O desenvolvimento não será demonstrado, mas salienta-se que esta estatística de teste \structure{log-rank} generalizado para \structure{$r$} funções tem \structure{distribuição aproximada qui-quadrado com $r - 1$ graus de liberdade}.
+- Neste caso, se $H_0$ é rejeitada, concluímos que pelo menos um grupo difere dos demais em relação à função de sobrevivência.
+- Para identificarmos quais grupos diferem uns dos outrous, uma possibilidade é realizar comparações dos grupos, \structure{dois a dois}, por meio do teste de \structure{log-rank} para dois grupos.
+    + O \structure{método de Bonferroni} ($\alpha/[\mbox{número de comparações múltiplas}]$) pode ser utilizado para controlar as taxas de erro tipo I.
+
+# Exemplo
+
+## Estudo de Malária {.allowframebreaks}
+
+- Um estudo experimental realizado com camundongos para verificar a eficácia da imunização pela malária foi conduzido no Centro de Pesquisas Renee Rachou, Fiocruz, Minas Gerais.
+- Nesse estudo, quarenta e quatro camundongos foram infectados pela malária.
+    - Os camundongos do grupo 1 foram imunizados 30 dias antes da infecção.
+    - Além da infecção pela malária, os camundongos dos grupos 1 e 3 foram, também, infectados pela esquistossomose.
+- O desfecho de interesse nesse estudo foi o tempo (em dias) decorrido desde a infecção pela malária até a morte do camundongo.
+    - O estudo teve duração de 30 dias.
+
+\framebreak
+
+\footnotesize
+
+```{r dados.malaria, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.mala <- read.table("../dados/malaria.csv",
+                      sep = ";",
+                      header = TRUE)
+head(df.mala)
+
+```
+
+\framebreak
+
+```{r km.mala, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo,
+               data = df.mala,
+               conf.type = "log-log")
+
+plot(ekm, conf.int = FALSE,
+     mark.time = TRUE,
+     col = c("orange", "blue", "red"),
+     lwd = 2, xlab = "Tempo (dias)",
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 30, by = 5),
+       col = "lightgrey", lty = 3)
+
+legend("bottomleft",
+       c("Grupo 1", "Grupo 2", "Grupo 3"),
+       col = c("orange", "blue", "red"),
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r logrank2, echo=TRUE, message=FALSE, warning=FALSE}
+
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala)
+
+```
+
+\normalsize
+
+\framebreak
+
+- Constatada a diferença entre os grupos \structure{($p = 0,002$)}, existe a necessidade de identificar quais curvas diferem entre si.
+- Se realizarmos comparações dois a dois, o método de Bonferroni ajusta o nível de significância de acordo com o número de comparações múltiplas.
+    + Como temos três grupos, três comparações dois a dois são possíveis de se realizar.
+    + Utilizando o nível de 5% de significância, o nível de significância ajustado por Bonferroni é $\alpha^{*} = \alpha/3 = 0,05/3 = 0,017$ para cada um dos testes.
+
+\framebreak
+
+__Grupo 1 vs. Grupo 2__
+
+\footnotesize
+
+```{r logrank3, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 1 vs grupo 2
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 3)
+
+```
+
+\framebreak
+
+\normalsize
+
+__Grupo 1 vs. Grupo 3__
+
+\footnotesize
+
+```{r logrank4, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 1 vs grupo 3
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 2)
+
+```
+
+\framebreak
+
+\normalsize
+
+__Grupo 2 vs. Grupo 3__
+
+\footnotesize
+
+```{r logrank5, echo=TRUE, message=FALSE, warning=FALSE}
+
+# grupo 2 vs grupo 3
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.mala,
+         subset = grupo != 1)
+
+```
+
+\normalsize
+
+\framebreak
+
+- \structure{Conclusão:} ao nível de 5% de significância,
+    + entre os grupos 1 e 2, não foram encontradas evidências de diferenças;
+    + a diferença entre os grupos 1 e 3 atesta a eficácia da imunização pela malária na presença de infecções pela malária e pela equistossomose;
+    + por outro lado, a diferença entre os grupos 2 e 3 mostra o impacto na mortalidade dos camundongos devido à infecção pela esquistossomose.
+
+# Outros testes {.allowframebreaks}
+
+- Outros testes foram propostos para comparar funões de sobrevivência.
+- No caso particular da comparação de duas funções de sobrevivência a seguinte forma geral inclui os testes mais importantes na literatura e generaliza a estatística $\chi^2_{LR}$
+
+$$
+S = \frac{\sum_{j=1}^k{u_j(d_{2j} - \overline{D}_{2j})^2}}{\sum_{j=1}^k{u_jV(D_{2j})}},
+$$
+
+com $u_j$ os __pesos__ que especificam os testes.
+
+- Sob a hipótese nula de que as funções de sobrevivência são iguais, a estatística $S$ tem distribuição qui-quadrado com 1 grau de liberdade para amostras grandes.
+
+\framebreak
+
+- O teste log-rank é obtido tomando-se $u_j = 1,\ j = 1, \ldots, k$.
+- Outro teste bastante utilizado na prática é o de Wilcoxon\footnote{Gehan, E. A. (1965). A Generalized Wilcoxon Test for Comparing Arbitrarily Singly-Censored Samples. \emph{Biometrika}, 52(1/2), 203–223.} obtido quando se toma $u_j = n_j$.
+- O teste de Tarone e Ware\footnote{Tarone, R. E., \& Ware, J. (1977). On Distribution-Free Tests for Equality of Survival Distributions. \emph{Biometrika}, 64(1), 156–160.} propõe peso $u_j = \sqrt{n_j}$, que fica entre os pesos do teste log-rank e de Wilcoxon.
+
+\begin{table}[]
+\begin{tabular}{lcc}
+\hline
+\textbf{Teste} & \textbf{Estatística} & \textbf{valor-p} \\ \hline
+Log-rank       & 3,67                 & 0,055            \\
+Wilcoxon       & 3,19                 & 0,074            \\
+Tarone-Ware    & 3,43                 & 0,064            \\ \hline
+\end{tabular}
+\end{table}
+
+## Outros testes {.allowframebreaks}
+
+- O teste de Wilcoxon que utiliza peso igual ao número de indivíduos sob risco, coloca mais pesos na porção inicial do eixo do tempo.
+    - No início do estudo todos indivíduos estão sob risco e saindo do estado "sob risco" à medida que experimentam o evento ou são censurados.
+- O teste log-rank, por outro lado, coloca mesmo peso para todo o eixo do tempo, o que reforça o enfoque nos tempos maiores quando comparado ao teste de Wilcoxon.
+- O teste de Tarone-Ware se localiza em uma situação intermediária.
+
+\framebreak
+
+- Peto e Peto (1972)\footnote{Peto, R., \& Peto, J. (1972). Asymptotically Efficient Rank Invariant Test Procedures. \emph{Journal of the Royal Statistical Society. Series A (General)}, 135(2), 185–207.} e Prentice (1978)\footnote{Prentice, R. L. (1978). Linear Rank Tests with Right Censored Data. \emph{Biometrika}, 65(1), 167–179.} (teste Peto-Prentice) sugerem utilizar uma função do peso que depende diretamente da experiência passada de sobrevivência observada das duas amostras combinadas.
+- A função do peso é uma modificação do estimador de Kaplan-Meier e é definido de tal forma que seu valor é conhecido antes do evento ocorrer.
+
+## Outros testes {.allowframebreaks}
+
+- Outra classe de pesos para $S$ foi proposta por Harrington-Fleming (1982)\footnote{Harrington, D. P. and Fleming, T. R. (1982). A class of rank test procedures for censored survival data. \emph{Biometrika} 69, 553-566.} como
+
+$$
+u_j = \left[\widehat{S}(t_{j-1})\right]^{\rho}.
+$$
+
+- Se $\rho = 0$, obtém-se $u_j = 1$ e tem-se então o teste log-rank.
+- Se $\rho = 1$, então o peso é o Kaplan-Meier no tempo de falha anterior que é um teste similar ao de Peto-Prentice.
+
+## Outros testes {.allowframebreaks}
+
+- A função `survdiff` do pacote `survival` utiliza a classe de pesos de Harrington-Fleming, em que o argumento `rho` especifica o tipo de ponderação.
+
+\footnotesize
+
+```{r hf, echo=TRUE, message=FALSE, warning=FALSE}
+
+# Log-rank
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.hep,
+         rho = 0)
+
+# Peto-Prentice
+survdiff(Surv(time = tempo, event = cens) ~ grupo,
+         data = df.hep,
+         rho = 1)
+
+```
+
+\normalsize
+
+# Considerações {.allowframebreaks}
+
+- Com o estimador de \structure{Kaplan-Meier} e o teste de \structure{log-rank} é possível:
+    + descrever dados de sobrevivência;
+    + comparar funções de sobrevivência entre grupos.
+- No entanto, estamos limitados a avaliar a influência de covariáveis (exposições ou tratamentos) discretas (categóricas ou categorizadas) na função de sobevivência em análises não ajustadas.
+- Como avaliar o efeito, na função de sobrevivência, de covariáveis contínuas, e ajustando para potenciais vairáveis de confusão?
+    + Uma possibilidade é proposição de modelos estatísticos com uma estrutura de regressão.
+    + Um modelo muito utilizado é o \structure{modelo de Cox}.
+
+## Para casa
+
+- Atividade de avaliação I.
+
+## Próxima aula
+
+- Modelo de Cox.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-forecast.jpg'))
+
+```
+
