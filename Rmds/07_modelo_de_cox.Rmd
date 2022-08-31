@@ -1,0 +1,834 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Modelo de Cox"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2022
+---
+
+<!-- # Relembrando -->
+
+<!-- ## Estudo de Hepatite {.allowframebreaks} -->
+
+<!-- - Um estudo clínico aleatorizado foi realizado para investigar o efeito da terapia com esteroide no tratamento de hepatite viral aguda. -->
+<!-- - __Vinte e nove pacientes com esta doença__ foram aleatorizados para receber um placebo ou o tratamento com esteroide. -->
+<!-- - Cada paciente foi acompanhado por 16 semanas ou até o óbito (evento de interesse) ou até a perda de acompanhamento. -->
+
+<!-- \framebreak -->
+
+<!-- - Os tempos de sobrevivência observados, em semanas, para os dois grupos são apresentados na tabela a seguir (+ indica censura). -->
+
+<!-- \footnotesize -->
+
+<!-- \begin{table}[] -->
+<!-- \begin{tabular}{ll} -->
+<!-- \hline -->
+<!-- Grupo     & Tempo de sobrevivência em semanas                                \\ \hline -->
+<!-- Controle  & 1+, 2+, 3, 3, 3+, 5+, 5+, 16+, 16+, 16+, 16+, 16+, 16+, 16+, 16+ \\ -->
+<!-- Esteroide & 1, 1, 1, 1+, 4+, 5, 7, 8, 10, 10+, 12+, 16+, 16+, 16+            \\ \hline -->
+<!-- \end{tabular} -->
+<!-- \end{table} -->
+
+<!-- \normalsize -->
+
+<!-- \framebreak -->
+
+<!-- - Utilizando o estimador de \structure{Kaplan-Meier}, obtemos a estimativa da função de sobrevivência, $S(t)$, para cada um dos grupos de tratamento.  -->
+
+<!-- \scriptsize -->
+
+<!-- ```{r dados, echo=FALSE, message=FALSE, warning=FALSE} -->
+
+<!-- tempo <-  c(1, 2, 3, 3, 3, 5, 5, 16, 16, 16, 16, 16, -->
+<!--             16, 16, 16, 1, 1, 1, 1, 4, 5, 7, 8, 10, -->
+<!--             10, 12, 16, 16, 16) -->
+
+<!-- cens <- c(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, -->
+<!--           0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, -->
+<!--           0, 0, 0, 0, 0) -->
+
+<!-- grupo <- factor(c(rep("Controle", 15), rep("Esteroide", 14))) -->
+
+<!-- df.hep <- data.frame(tempo, cens, grupo) -->
+
+<!-- # install.packages("survival") -->
+
+<!-- # Carregando pacote -->
+<!-- library(survival) -->
+
+<!-- # Dados do exemplo -->
+
+<!-- # head(df.hep) -->
+
+<!-- ekm <- survfit(Surv(time = tempo, event = cens) ~ grupo, -->
+<!--                data = df.hep, -->
+<!--                conf.type = "log-log") -->
+
+<!-- ``` -->
+
+<!-- ```{r km.grupo, echo=FALSE, message=FALSE, warning=FALSE} -->
+
+<!-- ekm -->
+
+<!-- ``` -->
+
+<!-- \framebreak -->
+
+<!-- \normalsize -->
+
+<!-- ```{r km.grupo.plot, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'} -->
+
+<!-- plot(ekm, conf.int = TRUE,  -->
+<!--      mark.time = TRUE, -->
+<!--      col = c("black", "red"),  -->
+<!--      lwd = 2, xlab = "Tempo (semanas)",  -->
+<!--      ylab = "Sobrevivência estimada") -->
+
+<!-- abline(h = seq(0, 1, by = 0.2), -->
+<!--        v = seq(0, 16, by = 4), -->
+<!--        col = "lightgrey", lty = 3) -->
+
+<!-- legend("bottomleft", -->
+<!--        c("Controle", "Esteroide"),  -->
+<!--        col = c("black", "red"),  -->
+<!--        lwd = 2, bty = "n") -->
+
+<!-- ``` -->
+
+<!-- \framebreak -->
+
+<!-- ::: {.block} -->
+
+<!-- ### Considerações -->
+
+<!-- - Aparentemente, o grupo Esteroide apresenta uma sobrevivência menor que o grupo Controle. -->
+<!--     + O \structure{tempo mediano de sobrevivência} para o grupo Esteroide é estimado em 10 semanas; para o grupo Controle, o tempo mediano de sobrevivência é maior que 16 semanas (último tempo de acompanhamento). -->
+<!--     +  A probabilidade de um indivíduo do grupo Esteroide sobreviver a 12 semanas é estimada em 0,437   (IC 95% 0,164-0,683); no grupo Controle, esta probabilidade é estimada em 0,846 (IC 95% 0,512-0,959). -->
+<!--     + As curvas de sobrevivência dos dois grupos não atingem o valor zero; isto sempre ocorre quando o maior tempo observado na amostra é uma censura. -->
+
+<!-- ::: -->
+
+<!-- \framebreak -->
+
+<!-- - Ainda, utilizando o teste de \structure{log-rank}, avaliamos a hipótese \structure{$H_0: S_1(t) = S_2(t)$} para todo tempo \structure{$t$}. -->
+
+<!-- \footnotesize -->
+
+<!-- ```{r logrank, echo=TRUE, message=FALSE, warning=FALSE} -->
+
+<!-- survdiff(Surv(time = tempo, event = cens) ~ grupo, -->
+<!--          data = df.hep) -->
+
+<!-- ``` -->
+
+<!-- \normalsize -->
+
+<!-- - Ao nível de 5% de significância não há evidências contra $H_0$.  -->
+<!--     + Portanto, as curvas de sobrevivência dos grupos Controle e Esteroide podem ser iguais. -->
+
+<!-- ## Considerações {.allowframebreaks} -->
+
+<!-- - Com o estimador de \structure{Kaplan-Meier} e o teste de \structure{log-rank} é possível: -->
+<!--     + descrever dados de sobrevivência; -->
+<!--     + comparar funções de sobrevivência entre grupos. -->
+<!-- - No entanto, estamos limitados a avaliar a influência de covariáveis (exposições ou tratamentos) discretas (categóricas ou categorizadas) na função de sobevivência em análises não ajustadas. -->
+<!-- - Como avaliar o efeito, na função de sobrevivência, de covariáveis contínuas, e ajustando para potenciais vairáveis de confusão? -->
+<!--     + Uma possibilidade é proposição de modelos estatísticos com uma estrutura de regressão. -->
+<!--     + Um modelo muito utilizado é o \structure{modelo de Cox}. -->
+
+# Estimação: o método da máxima verossimilhança (em poucas palavras)
+
+## Método da máxima verossimilhança {.allowframebreaks}
+
+O \structure{método da máxima verossimilhança} trata o problema de estimação da seguinte forma:
+
+- Com base nos resultados observados em uma amostra, \structure{$x_1, x_2, \ldots, x_n$}, qual é a distribuição (modelo probabilístico), entre todas aquelas definidas pelos possíveis valores de seus parâmetros, com maior \structure{verossimilhança} de ter gerado a amostra?
+
+\framebreak
+
+__Exemplo.__ Qual dos dois modelos abaixo tem maior verossimilhança de ter gerado a amostra?
+
+```{r veros, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='80%', purl=FALSE}
+
+curve(dnorm(x, mean = 10),
+      from = 5, to = 20,
+      ylim = c(0, 0.4),
+      lwd = 2,
+      col = "steelblue",
+      xlab = "x",
+      ylab = "Densidade")
+curve(dnorm(x, mean = 15),
+      from = 5, to = 20,
+      ylim = c(0, 0.4),
+      lwd = 2,
+      col = "lightsalmon",
+      add = TRUE)
+
+set.seed(10)
+x <- rnorm(n = 10, mean = 10)
+
+points(x = x, y = rep(0, 10), pch = 16)
+
+legend("topright",
+       legend = c("N(10, 1)", "N(15, 1)"),
+       col = c("steelblue", "lightsalmon"),
+       lty = 1,
+       lwd = 2,
+       bty = "n")
+
+```
+
+\framebreak
+
+- Formalizando, dada uma amostra de observações independentes, \structure{$x_1, x_2, \ldots, x_n$}, e com mesma distribuição, parametrizada pelo parâmetro genérico \structure{$\theta$}, \structure{$f(x_i; \theta)$}, a \structure{função de verossimilhança} é definida como:
+
+$$
+L(\theta) = \prod_{i=1}^n{f(x_i; \theta)}.
+$$
+
+- A \structure{estimativa de máxima verossimilhança (EMV)} do parâmetro \structure{$\theta$}, \structure{$\widehat{\theta}$} é o valor de \structure{$\theta$} que maximiza \structure{$L(\theta)$}. Ou seja,
+
+$$
+\widehat{\theta} = \arg\max_{\theta}{L(\theta)}.
+$$
+
+\framebreak
+
+Visualmente, temos
+
+```{r veros2, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='80%', purl=FALSE}
+
+set.seed(10)
+x <- rnorm(n = 10, mean = 10)
+theta <- seq(from = 8, to = 11, by = 0.01)
+
+L.fun <- function(theta, x){
+  L <- prod(dnorm(x = x, mean = theta))
+  L
+}
+
+L.theta <- rep(0, length(theta))
+for (i in 1:length(theta)){
+  L.theta[i] <- L.fun(theta = theta[i], x = x)
+}
+
+plot(theta,
+     L.theta,
+     type = "l",
+     lwd = 2,
+     xlab = expression(theta),
+     ylab = expression(L*(theta)), axes = F)
+
+segments(x0 = theta[which.max(L.theta)],
+         y0 = 0,
+         x1 = theta[which.max(L.theta)],
+         y1 = max(L.theta),
+         col = "red", lty = 2)
+
+points(x = theta[which.max(L.theta)], y = max(L.theta), pch = 8, col = "red")
+
+axis(1, at = c(8, 9, 10, 11), labels = c(8, 9, 10, 11))
+axis(1, at = theta[which.max(L.theta)], labels =expression(hat(theta)), col.axis = "red")
+axis(2)
+
+legend("topright", legend = "n = 10", bty = "n")
+
+```
+
+\framebreak
+
+Quando \structure{$n$} aumenta
+
+```{r veros3, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='80%', purl=FALSE}
+
+set.seed(10)
+x <- rnorm(n = 100, mean = 10)
+theta <- seq(from = 9, to = 11, by = 0.01)
+
+L.fun <- function(theta, x){
+  L <- prod(dnorm(x = x, mean = theta))
+  L
+}
+
+L.theta <- rep(0, length(theta))
+for (i in 1:length(theta)){
+  L.theta[i] <- L.fun(theta = theta[i], x = x)
+}
+
+plot(theta,
+     L.theta,
+     type = "l",
+     lwd = 2,
+     xlab = expression(theta),
+     ylab = expression(L*(theta)), axes = F)
+
+segments(x0 = theta[which.max(L.theta)],
+         y0 = 0,
+         x1 = theta[which.max(L.theta)],
+         y1 = max(L.theta),
+         col = "red", lty = 2)
+
+points(x = theta[which.max(L.theta)], y = max(L.theta), pch = 8, col = "red")
+
+axis(1, at = c(9, 10, 11), labels = c(9, 10, 11))
+axis(1, at = theta[which.max(L.theta)], labels =expression(hat(theta)), col.axis = "red")
+axis(2)
+
+legend("topright", legend = "n = 100", bty = "n")
+
+```
+
+\framebreak
+
+::: {.block}
+
+### Comentários
+
+- Avaliar o ponto que maximiza $L(\theta)$ é equivalente a avaliar o ponto que maximiza $\ell(\theta) = \log L(\theta)$.
+- $\theta$ pode ser um vetor de parâmetros.
+- Em geral, a obtenção do ponto de máximo da função de verossimilhança se dá por meio de \structure{métodos numéricos}.
+:::
+
+\framebreak
+
+::: {.block}
+
+### Principais propriedades dos estimadores de máxima verossimilhança
+
+- Distribuição assintoticamente normal.
+    + Ou seja, para grandes amostras, $\widehat{\theta} \stackrel{a}\sim N(\theta, \sigma^2_{\widehat{\theta}})$.
+- Propriedade da invariância.
+    + Se $\widehat{\theta}$ é EMV para $\theta$, então $e^{\hat{\theta}}$ é EMV para $e^{\theta}$, por exemplo.
+- A partir da normalidade assintótica, podemos
+    + Construir intervalos de confiança;
+    + Realizar testes de hipoóteses (Wald, Score, Razão de verossimilhanças).
+:::
+
+## Função de verossimilhança em dados de sobrevivência
+
+- Dada uma amostra de observações independentes, \structure{$(t_1, \delta_1), (t_2, \delta_2),\ldots, (t_n, \delta_n)$}, e assumindo que o \structure{mecanismo de censura é não-informativo}\footnote{A censura não é informativa, no caso em que, quando esta ocorre não dá nenhuma informação sobre o evento em estudo e as informações provenientes dos pacientes perdidos no seguimento são ignoradas. Essa hipótese de a censura ser independente do evento é uma hipótese forte que raramente é verificada. Por exemplo, no HIV, os pacientes que perdem o acompanhamento são geralmente os casos mais graves. A violação desta suposição acarreta em vieses.}, a função de verossimilhança é dada por
+
+\begin{align*}
+L(\theta) &= \prod_{i=1}^n{\left[f(t_i; \theta)\right]^{\delta_i}\times\left[S(t_i; \theta)\right]^{1 - \delta_i}}\\
+&= \prod_{i=1}^n{\left[\lambda(t_i; \theta)\right]^{\delta_i}S(t_i; \theta)}.
+\end{align*}
+
+# Modelo de Cox
+
+## Modelos de regressão em sobrevivência
+
+Duas classes de modelos de regressão se destacam em análise de sobrevivência:
+
+- Modelos de \structure{tempos de vida acelerados} ou \structure{modelos paramétricos}.
+- Modelos de \structure{riscos (taxas de falha) proporcionais} ou \structure{modelo semiparamétrico de Cox}.
+
+## Modelo de regressão de Cox
+
+O modelo de riscos proporcionais, também chamado de modelo de Cox (Cox, 1972)\footnote{Cox, D.R. (1972), Regression Models and Life-Tables. \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, 34: 187-202.}
+
+- abriu uma nova fase na modelagem de dados clínicos;
+- é o mais utilizado na análise de dados de sobrevivência;
+- permite incorporar facilmente covariáveis dependentes do tempo, que ocorrem com frequência em estudos clínicos e epidemiológicos.
+
+## Modelo de regressão de Cox {.allowframebreaks}
+
+- Assume-se, nesse modelo, que os tempos \structure{$t_i$ , $i = 1, \ldots, n$}, são independentes e que a \structure{taxa de falha (risco)} tem a seguinte forma:
+
+$$
+\lambda(t) = \textcolor{red}{\lambda_0(t)} \textcolor{blue}{\exp\{\beta_1x_1 + \ldots + \beta_px_p\}}.
+$$
+
+- O componente não-paramétrico, $\textcolor{red}{\lambda_0(t)}$, \structure{não é especificado} e é uma função não-negativa do tempo.
+    + Ele é usualmente chamado de \structure{função de taxa de falha basal}.
+- O componente paramétrico $\textcolor{blue}{\exp\{x'\beta\} = \exp\{\beta_1x_1 + \ldots + \beta_px_p\}}$ é o nosso interesse, em especial no vetor de parâmetros $\textcolor{blue}{\beta}$, e \structure{$x' = (x_1, x_2, \ldots, x_p)$ é um vetor de covariáveis observadas} (como, por exemplo, __sexo__, __idade__, __grupo de tratamento ou espoxição__, etc.).
+
+## Riscos proporcionais {.allowframebreaks}
+
+- O modelo é conhecido por ter taxas de falha (riscos) proporcionais.
+    - Este fato é conveniente na sua interpretação.
+- Ou seja, a razão das taxas de falha de dois indivíduos diferentes, $\textcolor{orange}{i}$ e $\textcolor{green}{j}$, é
+
+$$
+\frac{\lambda_i(t)}{\lambda_j(t)} = \frac{\lambda_0(t)\exp\{\textcolor{orange}{x_i}'\beta\}}{\lambda_0(t)\exp\{\textcolor{green}{x_j}'\beta\}} = \exp\{\textcolor{orange}{x_i}'\beta - \textcolor{green}{x_j}'\beta\},
+$$
+que \structure{não depende do tempo $t$}.
+
+\framebreak
+
+- Assim, se um indivíduo no início do estudo tem um risco de óbito igual a duas vezes o risco de um segundo indivíduo, então esta razão de riscos será a mesma para todo o período de acompanhamento.
+
+- Note que o modelo assume que as funções de taxa de falha de indivíduos distintos difere apenas com respeito às covariáveis destes indivíduos.
+
+\framebreak
+
+- Ainda considerando a propriedade de riscos proporcionais, suponha um estudo controlado que consiste na comparação dos tempos de falha de dois grupos em que os pacientes são selecionados aleatoriamente para receber o tratamento padrão (grupo controle, $x = 0$) ou o novo tratamento ($x=1$), tem-se:
+
+$$
+\frac{\lambda_1(t)}{\lambda_0(t)} = K,
+$$
+em que $K$ é uma razão de taxas de falha, constante para todo tempo $t$ de acompanhamento do estudo.
+
+\framebreak
+
+- Se $K = \exp\{\beta x\}$, temos o modelo de Cox para um única covariável dicotômica:
+
+$$
+\lambda(t) = \lambda_0(t)\exp\{\beta x\},
+$$
+ou seja,
+
+$$
+\lambda(t) = \left\{
+\begin{array}{ll}
+\lambda_1(t) = \lambda_0(t)\exp\{\beta x\},& \quad \mbox{se}\quad x = 1,\\
+\lambda_0(t),& \quad \mbox{se}\quad x = 0.\\
+\end{array}\right.
+$$
+
+\framebreak
+
+Suponha \structure{$\beta > 0$}. Graficamente, temos que o novo tratamento \structure{acelera} a taxa de falha dos pacientes.
+
+```{r rp, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='90%', purl=FALSE}
+
+lambda <- function(alpha, theta, t){
+  (alpha/theta)*(t/theta)^(alpha - 1)
+}
+
+alpha <- 1
+theta <- 10
+t <- seq(0, 15, by = 0.01)
+beta <- 1.5
+
+plot(t,
+     lambda(alpha = alpha, theta = theta, t = t),
+     ylim = c(0, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha cosntante",
+     xlab = "t",
+     ylab = expression(lambda*(t)))
+lines(t,
+     lambda(alpha = alpha, theta = theta, t = t)*exp(beta),
+     lty = 2,
+     lwd = 2)
+legend("topright",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[0]*(t)*exp*(beta))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+       )     
+
+```
+
+\framebreak
+
+```{r rp2, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%', purl=FALSE}
+
+alpha <- 1.2
+theta <- 10
+t <- seq(0, 15, by = 0.01)
+beta <- 1.5
+
+par(mfrow = c(1,2))
+
+plot(t,
+     lambda(alpha = alpha, theta = theta, t = t),
+     ylim = c(0, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha crescente",
+     xlab = "t",
+     ylab = expression(lambda*(t)))
+lines(t,
+      lambda(alpha = alpha, theta = theta, t = t)*exp(beta),
+      lty = 2,
+      lwd = 2)
+legend("topleft",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[0]*(t)*exp*(beta))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+plot(t,
+     log(lambda(alpha = alpha, theta = theta, t = t)),
+     ylim = c(-3.5, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha crescente (escala log)",
+     xlab = "t",
+     ylab = expression(log*(lambda*(t))))
+lines(t,
+      log(lambda(alpha = alpha, theta = theta, t = t)*exp(beta)),
+      lty = 2,
+      lwd = 2)
+legend("topleft",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[0]*(t)*exp*(beta))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+```
+
+\framebreak
+
+```{r rp3, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%', purl=FALSE}
+
+alpha <- 0.8
+theta <- 10
+t <- seq(0, 15, by = 0.01)
+beta <- 1.5
+
+par(mfrow = c(1,2))
+
+plot(t,
+     lambda(alpha = alpha, theta = theta, t = t),
+     ylim = c(0, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha decrescente",
+     xlab = "t",
+     ylab = expression(lambda*(t)))
+lines(t,
+      lambda(alpha = alpha, theta = theta, t = t)*exp(beta),
+      lty = 2,
+      lwd = 2)
+legend("topright",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[0]*(t)*exp*(beta))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+plot(t,
+     log(lambda(alpha = alpha, theta = theta, t = t)),
+     ylim = c(-3.5, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha decrescente (escala log)",
+     xlab = "t",
+     ylab = expression(log*(lambda*(t))))
+lines(t,
+      log(lambda(alpha = alpha, theta = theta, t = t)*exp(beta)),
+      lty = 2,
+      lwd = 2)
+legend("topright",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[0]*(t)*exp*(beta))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+```
+
+\framebreak
+
+- Desta série de exemplos da proporcionalidade dos riscos do modelo de Cox, reforça-se que o foco deste modelo não está na forma que $\textcolor{red}{\lambda_0(t)}$ assume, mas sim no \structure{efeito (multiplicativo) que a(s) covariável(eis)} tem em $\textcolor{red}{\lambda_0(t)}$.
+
+\framebreak
+
+- Por fim, apresentamos um exemplo gráfico em que a proporcionalidade dos riscos \structure{não se verifica}.
+
+```{r rp4, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='80%', purl=FALSE}
+
+alpha <- 0.8
+theta <- 10
+t <- seq(0, 15, by = 0.01)
+beta <- 1.5
+
+par(mfrow = c(1,2))
+
+plot(t,
+     lambda(alpha = alpha, theta = theta, t = t),
+     ylim = c(0, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha decrescente",
+     xlab = "t",
+     ylab = expression(lambda*(t)))
+lines(t,
+      lambda(alpha = alpha, theta = theta, t = t)*exp(beta/t^2),
+      lty = 2,
+      lwd = 2)
+legend("topright",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[1]*(t))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+plot(t,
+     log(lambda(alpha = alpha, theta = theta, t = t)),
+     ylim = c(-3.5, 0.65),
+     type = "l",
+     lwd = 2,
+     main = "Taxa de falha decrescente (escala log)",
+     xlab = "t",
+     ylab = expression(log*(lambda*(t))))
+lines(t,
+      log(lambda(alpha = alpha, theta = theta, t = t)*exp(beta/t^2)),
+      lty = 2,
+      lwd = 2)
+legend("topright",
+       legend = c(expression(lambda[0]*(t)),
+                  expression(lambda[1]*(t))),
+       lty = c(1, 2),
+       lwd = 2,
+       bty = "n"
+)     
+
+```
+
+## Estimação no modelo de Cox
+
+- O modelo de regressão de Cox é caracterizado pelos coeficientes \structure{$\beta's$}, que \structure{medem os efeitos das covariáveis sobre a função de taxa de falha}.
+- Um método de estimação é necessário para se fazer inferências no modelo.
+- O método de máxima verossimilhança não é adequado devido a presença do componente não-paramétrico $\lambda_0(t)$.
+
+$$
+L(\beta) = \prod_{i=1}^n{[\textcolor{red}{\lambda_0(t_i)}\exp\{x_i'\beta\}]^{\delta_i}[S_0(t_i)]^{\exp\{x_i'\beta\}}}.
+$$
+
+## Função de verossimilhança parcial
+
+- Cox (1975)\footnote{Cox, D. R., Partial likelihood, \emph{Biometrika}, Volume 62, Issue 2, August 1975, Pages 269–276.} propôs então uma solução alternativa: \structure{verossimilhança parcial}.
+- Este método consiste em condicionar a construção da função de verossimilhança ao conhecimento da história passada de falhas e censuras.
+- Desta forma, elimina-se o componente não-paramétrico da função de verossimilhança.
+
+## Função de verossimilhança parcial {.allowframebreaks}
+
+- A \structure{função de verossimilhança parcial} é utilizada para fazer inferência no modelo de Cox.
+- A verossimilhança parcial é formada pelo produto de todos os indivíduos da amostra:
+
+$$
+L(\beta) = \prod_{i=1}^k{\frac{\exp\{x_i'\beta\}}{\sum_{j\in R(t_i)}{\exp\{x_j'\beta\}}}} = \prod_{i=1}^n{\left(\frac{\exp\{x_i'\beta\}}{\sum_{j\in R(t_i)}{\exp\{x_j'\beta\}}}\right)^{\delta_i}},
+$$
+em que \structure{$R(t_i)$ é o conjunto dos índices das observações sob risco no tempo $t_i$}, e \structure{$\delta_i$} é indicadora de falha ou censura.
+
+- Os valores de \structure{$\beta$ que maximizam $L(\beta)$ são as estimativas de máxima verossimilhança parcial}, \structure{$\widehat{\beta}$}, de \structure{$\beta$}.
+
+\framebreak
+
+- A função de verossimilhança parcial proposta por Cox assume que os tempos de ocorrência de evento são distintos (ausência de tempos empatados).
+- Para o caso de tempos de falha empatados, uma aproximação da função de verossimilhança deve ser usada.
+- Entre as diversas propostas na literatura, as aproximações propostas por \structure{Breslow (1972)}\footnote{Breslow, N. (1972), Discussion on Professor Cox's Paper. \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, 34: 202-220.} e \structure{Efron (1977)}\footnote{Bradley Efron (1977) The Efficiency of Cox's Likelihood Function for Censored Data, \emph{Journal of the American Statistical Association}, 72:359, 557-565.} são as que mais comumente são encontradas nas implementações dos _softwares_ de análise de sobrevivência.
+
+## Inferência no modelo de Cox {.allowframebreaks}
+
+- Assim como os EMV, os estimadores de máxima verossimilhança parcial, em amostras grandes, tem distribuição aproximadamente normal.
+- Isto nos permite construir \structure{intervalos de confiança $100\times(1 - \alpha)$\%} para \structure{$\beta_r$ (o efeito da $r$-ésima covariável)}
+
+$$
+\hat{\beta}_r \pm z_{1-\alpha/2} \widehat{ep}(\widehat{\beta}_r),
+$$
+em que \structure{$z_{1-\alpha/2}$} é quantil correspondente na distribuição normal padrão, e \structure{$\widehat{ep}(\widehat{\beta}_r)$} é a estimativa do erro padrão de \structure{$\widehat{\beta}_r$}.
+
+\framebreak
+
+- Também podemos construir um teste de hipóteste para avaliar \structure{$H_0: \beta_r = 0$}. O \structure{teste de Wald} é bastante utilizado
+
+$$
+z = \frac{\widehat{\beta}_r}{\widehat{ep}(\widehat{\beta}_r)} \stackrel{a}{\sim} N(0,1).
+$$
+
+- O \structure{teste da razão de verossimilhanças} geralmente é usado para comparação de modelos.
+
+## Interpretação dos coeficientes estimados {.allowframebreaks}
+
+- O efeito das covariáveis é de acelerar ou desacelerar a função de risco.
+- A propriedade de taxas proporcionais é extremamente útil na interpretação dos coeficientes estimados.
+- A razão das taxas de falha de dois indivíduos $i$ e $j$ que têm os mesmos valores para as covariáveis com exceção da $l$-ésima, tem-se
+
+$$
+\frac{\lambda_i(t)}{\lambda_j(t)} = \exp\{\beta_l(x_{il} - x_{jl})\},
+$$
+que é interpretado como a \structure{razão de taxas de falha (\emph{hazard ratio}, $HR$; ou ainda ``razão de riscos'')}.
+
+\framebreak
+
+- Por exemplo, suponha que \structure{$x_l$} seja uma covariável dicotômica indicando pacientes hipertensos. 
+    - A taxa de óbito entre os hipertensos é \structure{$\exp(\beta_l)$ vezes} a taxa daqueles com pressão normal, \structure{mantida fixas as outras covariáveis}.
+- Uma interpretação similar é obtida para covariáveis contínuas.
+    - Se, por exemplo, o efeito de idade (em anos) é  \structure{$e^{\beta} = 1,05$} para este termo, tem-se com o \structure{aumento de 1 ano na idade, que a taxa de óbito aumenta em 5\%}.
+
+\framebreak
+
+- Estimativa pontual para \structure{$HR = \exp\{\beta_l\}$} pode ser obtida utilizando-se a \structure{propriedade de invariância} do estimador de máxima verossimilhança parcial.
+- Para obtenção da \structure{estimativa intervalar}, é necessário obter uma \structure{estimativa do erro padrão} de \structure{$\exp\{\widehat{\beta}_l\}$}.
+    + Isto pode ser feito utilizando-se o \structure{método delta}.
+- Retornando ao exemplo dos pacientes hipertensos e com pressão normal:
+    + O valor 1 pertencendo ao intervalo estimado, indica não haver evidências de que os riscos dos pacientes hipertensos e com pressão normal apresentem diferenças significativas.
+
+# Exemplo
+
+## Estudo sobre câncer de laringe {.allowframebreaks}
+
+Neste exemplo, os dados considerados referem-se a um estudo realizado com 90 pacientes do sexo masculino diagnosticados no período de 1970 a 1978 com câncer de laringe e que foram acompanhados até 01/01/1983.
+
+Para cada paciente, foram registrados, no diagnóstico:
+
++ a idade (em anos);
++ o estágio da doença (ordenados por grau de severidade da doença):
+    I. tumor primário;
+    II. envolvimento de nódulos;
+    III. metástases;
+    IV. combinações dos 3 estágios anteriores.
++ tempos de óbito ou censura (em meses).
+
+\framebreak
+
+\footnotesize
+
+```{r laringe, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.laringe <- read.table(file = "../dados/laringe.txt",
+                         header = TRUE)
+
+
+head(df.laringe)
+
+```
+
+\framebreak
+
+\scriptsize
+
+```{r laringe.conhece.dados, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+\framebreak
+
+\footnotesize
+
+```{r laringe.transforma.dados, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.laringe$estagio <- factor(x = df.laringe$estagio,
+                             levels = 1:4,
+                             labels = c("I", "II", "III", "IV"))
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+\framebreak
+
+```{r laringe.km, echo=TRUE, message=FALSE, warning=FALSE}
+
+ekm <- survfit(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe,
+               conf.type = "log-log")
+
+ekm
+
+```
+
+\framebreak
+
+```{r laringe.km.plot, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = FALSE, 
+     mark.time = TRUE,
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+     lwd = 2, xlab = "Tempo (meses)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 16, by = 4),
+       col = "lightgrey", lty = 3)
+
+legend("topright",
+       c("I", "II", "III", "IV"), 
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r laringe.lr, echo=TRUE, message=FALSE, warning=FALSE}
+
+survdiff(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe)
+
+```
+
+\framebreak
+
+```{r laringe.cox, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod1 <- coxph(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe, method = "breslow")
+
+summary(mod1)
+
+```
+
+\framebreak
+
+```{r laringe.cox2, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod2 <- coxph(Surv(time = tempos, event = cens) ~ idade,
+               data = df.laringe, method = "breslow")
+
+summary(mod2)
+
+```
+
+\framebreak
+
+```{r laringe.cox3, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod3 <- coxph(Surv(time = tempos, event = cens) ~ estagio + idade,
+               data = df.laringe, method = "breslow")
+
+summary(mod3)
+
+```
+
+## Para casa
+
+1. Leia o capítulo 5 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulo 6 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+
+## Próxima aula
+
+- Estimação de funções relacionadas a $\lambda_0(t)$.
+- Adequação do modelo de Cox.
+    + Análise de resíduos.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-mickey.jpg'))
+
+```
+

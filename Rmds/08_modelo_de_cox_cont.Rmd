@@ -1,0 +1,497 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Modelo de Cox"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2022
+---
+
+# Relembrando
+
+## Modelo de regressão de Cox {.allowframebreaks}
+
+- Assume-se, nesse modelo, que os tempos \structure{$t_i$ , $i = 1, \ldots, n$}, são independentes e que a \structure{taxa de falha (risco)} tem a seguinte forma:
+
+$$
+\lambda(t) = \textcolor{red}{\lambda_0(t)} \textcolor{blue}{\exp\{\beta_1x_1 + \ldots + \beta_px_p\}}.
+$$
+
+- O componente não-paramétrico, $\textcolor{red}{\lambda_0(t)}$, \structure{não é especificado} e é uma função não-negativa do tempo.
+    + Ele é usualmente chamado de \structure{função de taxa de falha basal}.
+- O componente paramétrico $\textcolor{blue}{\exp\{x'\beta\} = \exp\{\beta_1x_1 + \ldots + \beta_px_p\}}$ é o nosso interesse, em especial no vetor de parâmetros $\textcolor{blue}{\beta}$, e \structure{$x' = (x_1, x_2, \ldots, x_p)$ é um vetor de covariáveis observadas} (como, por exemplo, __sexo__, __idade__, __grupo de tratamento ou espoxição__, etc.).
+
+\framebreak
+
+- Estimação pelo método da máxima verossimilhança parcial.
+    + Intervalos de confiança e testes de hipóteses podem ser construídos para cada componente \structure{$\beta_r$} do vetor de coeficientes \structure{$\beta$}.
+- \emph{Hazard ratio} \structure{($HR_r = e^{\beta_r}$)} expressa a razão entre taxas de falha entre dois grupos (definidos por alguma variável de tratamento ou exposição).
+    + Por conta da proporcionalidade dos riscos, \structure{$HR$} não depende do tempo $t$ (constante ao longo do tempo).
+    + \structure{$HR = 1$} ($\beta = 0$): a covariável não influencia na função de taxa de falha.
+    + \structure{$HR > 1$} ($\beta > 0$): a covariável acelera a função de taxa de falha.
+    + \structure{$HR < 1$} ($\beta < 0$): a covariável desacelera a função de taxa de falha.
+    
+# Exemplo
+
+## Estudo sobre câncer de laringe {.allowframebreaks}
+
+- Neste exemplo, os dados considerados referem-se a um estudo realizado com 90 pacientes do sexo masculino diagnosticados no período de 1970 a 1978 com câncer de laringe e que foram acompanhados até 01/01/1983.
+- Para cada paciente, foram registrados, no diagnóstico:
+    + a idade (em anos);
+    + o estágio da doença 
+        (ordenados por grau de severidade da doença):
+        \textcolor{white}{I.}
+        I. tumor primário;
+        II. envolvimento de nódulos;
+        III. metástases;
+        IV. combinações dos 3 estágios anteriores.
+    + tempos de óbito ou censura (em meses).
+
+\framebreak
+
+\footnotesize
+
+```{r laringe, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.laringe <- read.table(file = "../dados/laringe.txt",
+                         header = TRUE)
+
+
+head(df.laringe)
+
+```
+
+\framebreak
+
+\scriptsize
+
+```{r laringe.conhece.dados, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+\framebreak
+
+\footnotesize
+
+```{r laringe.transforma.dados, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.laringe$estagio <- factor(x = df.laringe$estagio,
+                             levels = 1:4,
+                             labels = c("I", "II", "III", "IV"))
+
+str(df.laringe)
+
+summary(df.laringe)
+
+```
+
+\framebreak
+
+```{r laringe.km, echo=TRUE, message=FALSE, warning=FALSE}
+library(survival)
+
+ekm <- survfit(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe,
+               conf.type = "log-log")
+
+ekm
+
+```
+
+\framebreak
+
+```{r laringe.km.plot, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm, conf.int = FALSE, 
+     mark.time = TRUE,
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+     lwd = 2, xlab = "Tempo (meses)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topright",
+       c("I", "II", "III", "IV"), 
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r laringe.lr, echo=TRUE, message=FALSE, warning=FALSE}
+
+survdiff(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe)
+
+```
+
+\framebreak
+
+```{r laringe.cox, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod1 <- coxph(Surv(time = tempos, event = cens) ~ estagio,
+               data = df.laringe, method = "breslow")
+
+summary(mod1)
+
+```
+
+\framebreak
+
+```{r laringe.cox2, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod2 <- coxph(Surv(time = tempos, event = cens) ~ idade,
+               data = df.laringe, method = "breslow")
+
+summary(mod2)
+
+```
+
+\framebreak
+
+```{r laringe.cox3, echo=TRUE, message=FALSE, warning=FALSE}
+
+mod3 <- coxph(Surv(time = tempos, event = cens) ~ estagio + idade,
+               data = df.laringe, method = "breslow")
+
+summary(mod3)
+
+```
+
+# Estimando funções relacionadas a $\lambda_0(t)$
+
+## Estimando funções relacionadas a $\lambda_0(t)$ {.allowframebreaks}
+
+- Os coeficientes de regressão \structure{$\beta$} são as quantidades de maior interesse na modelagem estatística de dados de sobrevivência.
+- Entretanto, funções relacionadas a \structure{$\lambda_0(t)$} são também importantes no modelo de Cox.
+- Estas funções referem-se referem-se basicamente à função de taxa de falha acumulada de base
+
+$$
+\Lambda_0(t) = \int_0^t{\lambda_0(u)du}
+$$
+e à correspondente função de sobrevivência
+
+$$
+S_0(t) = \exp\left\{-\Lambda_0(t)\right\}.
+$$
+\framebreak
+
+- A maior importância destas funções diz respeito ao uso delas em técnicas gráficas para avaliar a adequação do modelo ajustado.
+- A função de sobrevivência
+
+$$
+S(t) = [S_0(t)]^{\exp\{x'\beta\}}
+$$
+é também útil quando se deseja concluir a análise em termos de percentis associados a grupos de indivíduos.
+
+- Ou quando se deseja estimar a função de sobrevivência em um certo tempo $t$ especificado.
+
+\framebreak
+
+- Se \structure{$\lambda_0(t)$} fosse especificado parametricamente, poderia ser estimado usando a função de verossimilhança.
+- Entretanto, na verossimilhança parcial, o argumento condicional elimina completamente esta função.
+- Desta forma, os estimadores para estas quantidades serão de natureza não-paramétrica.
+- Uma estimativa simples para \structure{$\Lambda_0(t)$}, proposta por Breslow (1972)\footnote{Breslow, N. (1972), Discussion on Professor Cox's Paper. \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, 34: 202-220.}, é uma função escada com saltos nos tempos distintos de falha e expressa por
+
+$$
+\widehat{\Lambda}_0(t) = \sum_{j:t_j < t}{\frac{d_j}{\sum_{l\in R_j}{\exp\{x'\widehat{\beta}\}}}},
+$$
+em que \structure{$d_j$} é o número de falhas em \structure{$t_j$}.
+
+## Estimando funções relacionadas a $\lambda_0(t)$ {.allowframebreaks}
+
+- Consequentemente, as funções de sobrevivência \structure{$S_0(t)$} e \structure{$S(t)$} podem ser estimada a partir da expressão acima por
+
+$$
+\widehat{S}_0(t) = \exp\left\{-\widehat{\Lambda}_0(t)\right\},
+$$
+e
+
+$$
+\widehat{S}(t) = [\widehat{S}_0(t)]^{\exp\{x'\widehat{\beta}\}}.
+$$
+\framebreak
+
+::: {.block}
+### Comentários
+
+- Tanto \structure{$\widehat{S}_0(t)$} quanto \structure{$\widehat{S}(t)$} são funções escada decrescentes com o tempo.
+- Na ausência de covariáveis \structure{($x' = 0$)}, a expressão de $\widehat{\Lambda}_0(t)$ reduz-se a
+
+$$
+\widehat{\Lambda}_0(t) = \sum_{j:t_j < t}{\left(\frac{d_j}{n_j}\right)}.
+$$
+
+- Esta expressão acima é conhecida como o \structure{estimador de Nelson-Aalen}.
+    + \structure{$\tilde{S}(t) = \exp\{-\widehat{\Lambda}(t)\}$}, em que \structure{$\widehat{\Lambda}(t) = \sum_{j:t_j < t}{\left(d_j/n_j\right)}$}, é uma estimativa da função de sobrevivência com base no estimador de Nelson-Aalen, e é um estimador alternativo ao estimador de Kaplan-Meier.
+:::
+
+\framebreak
+
+\footnotesize
+
+```{r laringe.Lambda0, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(survfit(mod1),
+     cumhaz = TRUE,
+     conf.int = FALSE,
+     lwd = 2, xlab = "t (meses)", 
+     ylab = expression(hat(Lambda)[0](t)))
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+```
+
+\framebreak
+
+```{r laringe.S0, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(survfit(mod1),
+     conf.int = FALSE,
+     lwd = 2, xlab = "t (meses)", 
+     ylab = expression(hat(S)[0](t)))
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+```
+
+\framebreak
+
+```{r laringe.surv.cox, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+df.novo <- data.frame(
+  estagio = levels(df.laringe$estagio))
+
+plot(survfit(mod1, newdata = df.novo),
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+     lwd = 2, xlab = "Tempo (meses)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topright",
+       c("I", "II", "III", "IV"),
+       title = "Estágio",
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r laringe.surv.cox2, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+df.novo <- data.frame(
+  idade = c(57, 65, 72))
+
+plot(survfit(mod2, newdata = df.novo),
+     col = c("#D95F02",
+             "#7570B3", "#E7298A"), 
+     lwd = 2, xlab = "Tempo (meses)", 
+     ylab = "Sobrevivência estimada")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topright",
+       legend = c(57, 65, 72), 
+       col = c("#D95F02",
+             "#7570B3", "#E7298A"),
+       title = "Idade (anos)",
+       lwd = 2, bty = "n")
+
+```
+
+\framebreak
+
+```{r laringe.surv.cox3, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+df.novo <- data.frame(
+  idade = 65,
+  estagio = levels(df.laringe$estagio))
+
+plot(survfit(mod3, newdata = df.novo),
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+     lwd = 2, xlab = "Tempo (meses)", 
+     ylab = "Sobrevivência estimada (idade = 65 anos)")
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topright",
+       c("I", "II", "III", "IV"),
+       title = "Estágio",
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+
+```
+
+\normalsize
+
+# Adequação do Modelo de Cox {.allowframebreaks}
+
+- O modelo de regressão de Cox é bastante flexível devido à presença do componente não-paramétrico.
+- Mesmo assim, ele não se ajusta a qualquer situação e como qualquer outro modelo estatéstico, requer o uso de técnicas para avaliar a sua adequação.
+- Em particular, a \structure{suposição de riscos proporcionais}.
+    + A violação desta suposição pode acarretar sérios viéses na estimação dos coeficientes do modelo.
+
+\framebreak
+
+- Diversos métodos para avaliar a adequação deste modelo encontram-se disponíveis na literatura.
+- Estes baseiam-se, essencialmente, em \structure{análise de resíduos}.
+- Alguns desses métodos são apresentados a seguir.
+
+# Avaliação da proporcionalidade dos riscos
+
+## Método gráfico descritivo {.allowframebreaks}
+
+- Para verificar a suposição de riscos proporcionais no modelo de Cox, um gráfico simples e bastante usado é obtido, inicialmente, dividindo os dados em \structure{$m$} estratos, usualmente de acordo com alguma covariável.
+    + Por exemplo, dividir os dados em dois estratos de acordo com a covariável sexo.
+- Em seguida, deve-se estimar \structure{$\widehat{\Lambda}_0(t)$} para cada estrato.
+
+\framebreak
+
+- Se a suposição for válida, as curvas do logaritmo de \structure{$\widehat{\Lambda}_0(t)$} versus \structure{$t$}, ou \structure{$\log(t)$}, devem apresentar diferenças aproximadamente constantes no tempo.
+    + Curvas não paralelas significam desvios da suposição de riscos proporcionais.
+- É razoável construir este gráfico para cada covariável incluída no estudo.
+    + Se a covariável for de natureza contínua, uma sugestão é agrupá-la em um pequeno número de categorias.
+- Situações extremas de violação da suposição ocorrem quando as curvas se cruzam.
+
+\framebreak
+
+\footnotesize
+
+```{r laringe.mgd, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(ekm,
+     fun = "cloglog",
+     conf.int = FALSE,
+     col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"),
+     lwd = 2, xlab = expression(log*(t)),
+     ylab = expression(log*(hat(Lambda)[0]*(t))))
+
+abline(h = seq(0, 1, by = 0.2),
+       v = seq(0, 10, by = 2),
+       col = "lightgrey", lty = 3)
+
+legend("topleft",
+       c("I", "II", "III", "IV"),
+       title = "Estágio",
+       col = c("#1B9E77", "#D95F02",
+             "#7570B3", "#E7298A"), 
+       lwd = 2, bty = "n")
+
+
+```
+
+\normalsize
+
+## Método com coeficiente dependente do tempo {.allowframebreaks}
+- Uma proposta adicional de análise da suposição de riscos proporcionais é fazer uso dos
+\structure{resíduos de Schoenfeld}.
+- Existe um conjunto de resíduos para cada covariável.
+- Usar o gráfico dos \structure{resíduos padronizados} contra o tempo para cada covariável.
+- Inclinação zero mostra evidência a favor da proporcionalidade dos riscos.
+
+\framebreak
+
+\footnotesize
+
+```{r laringe.resid0, echo=FALSE, message=FALSE, warning=FALSE}
+
+par(mfrow = c(1,2))
+
+```
+
+```{r laringe.resid1, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+
+plot(cox.zph(mod3),
+     col = "red",
+     lwd = 2)
+
+```
+
+```{r laringe.resid2, echo=FALSE, message=FALSE, warning=FALSE}
+
+par(mfrow = c(1,1))
+
+```
+
+\normalsize
+
+## Medidas estatísticas e testes de hipóteses {.allowframebreaks}
+
+- As técnicas gráficas envolvem uma interpretação com carácter subjetivo.
+- Testes de hipóteses podem auxiliar neste processo de decisão.
+- O coeficiente de correlação de Pearson \structure{($\rho$)} entre os \structure{resíduos padronizados de Schoenfeld} e \structure{$g(t)$} para cada covariável é uma dessas medidas.
+- Valores de \structure{$\rho$} próximos de zero mostram evidências em favor da suposição de riscos proporcionais.
+- Um __teste hipóteses global de proporcionalidade de riscos__ sobre todas as covariávies no modelo pode ser realizado.
+
+\framebreak
+
+```{r laringe.resid3, echo=TRUE, message=FALSE, warning=FALSE}
+
+cox.zph(mod3)
+
+```
+
+\normalsize
+
+## Considerações finais
+
+- \structure{Resíduos \emph{martingale} e \emph{deviance}} podem ser obtidos para a avaliação de outros aspectos do modelo de Cox, tais como:
+    + pontos atípicos
+    + forma funcional da relação das covariáveis (não linearidade, por exemplo)
+    + pontos influentes
+- Retornaremos a estas técnicas nas próximas aulas, quando também discutiremos alternativas ao modelo de Cox quando a suposição de riscos proporcionais é violada.
+
+## Para casa
+
+1. Leia o capítulo 5 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}.
+2. Leia os capítulo 6 e 7 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}.
+
+## Próxima aula
+
+- Aplicações com o modelo de Cox.
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-pizza.jpg'))
+
+```
+
