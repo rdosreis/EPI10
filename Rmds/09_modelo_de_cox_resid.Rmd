@@ -101,10 +101,6 @@ plot(ekm,
      lwd = 2, xlab = expression(log*(t)),
      ylab = expression(log*(hat(Lambda)[0]*(t))))
 
-abline(h = seq(0, 1, by = 0.2),
-       v = seq(0, 10, by = 2),
-       col = "lightgrey", lty = 3)
-
 legend("topleft",
        c("I", "II", "III", "IV"),
        title = "Estágio",
@@ -230,18 +226,22 @@ anova(mod3, mod4)
 
 __(Um parênteses sobre interações)__
 
+\footnotesize
+
 ```{r laringe.publish, echo=TRUE, message=FALSE, warning=FALSE}
 
 # install.packages(Publish)
 library(Publish)
 
-publish(mod4)
+# publish(mod4)
 
 plot(publish(mod4))
 
 ```
 
 \framebreak
+
+\normalsize
 
 - Modelos não aninhados podem ser comparados pelos \structure{critérios de informação de Akaike (AIC)} ou \structure{Bayesiano (BIC)}.
     + Ao comparar modelos ajustados por máxima verossimilhança para os mesmos dados, quanto menor o AIC (ou BIC), melhor é o ajuste.
@@ -286,7 +286,7 @@ summary(mod5)
 
 \framebreak
 
-```{r laringe.sp2, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+```{r laringe.sp2, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='90%'}
 
 termplot(model = mod5, terms = "pspline(idade)",
          se = TRUE,
@@ -298,7 +298,7 @@ termplot(model = mod5, terms = "pspline(idade)",
 
 \framebreak
 
-```{r laringe.sp3, echo=TRUE, message=FALSE, warning=FALSE}
+```{r laringe.sp3, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='90%'}
 
 library(splines)
 
@@ -311,7 +311,7 @@ summary(mod6)
 
 \framebreak
 
-```{r laringe.sp4, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+```{r laringe.sp4, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='90%'}
 
 termplot(model = mod6, terms = "ns(idade, df = 3)",
          se = TRUE,
@@ -323,7 +323,7 @@ termplot(model = mod6, terms = "ns(idade, df = 3)",
 
 \framebreak
 
-```{r laringe.sp5, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+```{r laringe.sp5, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center', out.width='90%'}
 
 library(Greg)
 
