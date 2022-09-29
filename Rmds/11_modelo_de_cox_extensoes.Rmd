@@ -1,0 +1,443 @@
+---
+title: "EPI10 - Análise de Sobrevivência"
+subtitle: "Modelos de Cox estratificado e com covariáveis dependentes do tempo"
+fontsize: 10pt
+author: |
+  | Rodrigo Citton P. dos Reis
+  | `citton.padilha@ufrgs.br`
+institute: |
+  | \textsc{Universidade Federal do Rio Grande do Sul}
+  | \textsc{Faculdade de Medicina}
+  | \textsc{Programa de Pós-Graduação em Epidemiologia}
+date: |
+  | Porto Alegre, 2022
+---
+
+# Introdução {.allowframebreaks}
+
+- Algumas situações práticas envolvendo medidas longitudinais não são ajustadas adequadamente usando o modelo de Cox na sua forma original como apresentado nas últimas aulas.
+- Existem \structure{covariáveis} que são monitoradas durante o estudo, e seus valores \structure{podem mudar} ao longo desse período.
+    + Por exemplo, pacientes podem mudar de grupo durante o tratamento ou a dose de quimioterapia aplicada em pacientes com câncer pode sofrer alterações durante o curso do tratamento.
+
+\framebreak
+
+- Se estes valores forem incorporados na análise estatística, resultados mais precisos podem ser obtidos comparados àqueles em que utilizam somente as mesmas medidas registradas no início do estudo.
+    - Em outros exemplos, a não inclusão destes valores pode acarretar sérios vícios.
+- Este tipo de \structure{covariável} é chamada de \structure{dependente do tempo} e o \structure{modelo de Cox} pode ser \structure{estendido} para incorporar as informações longitudinais registradas para esta variável.
+
+\framebreak
+
+- Em outras situações a \structure{suposição de riscos proporcionais é violada} e o modelo de Cox não é adequado.
+- Modelos alternativos existem para enfrentar esta situação.
+- Um deles é uma extensão do próprio modelo de Cox chamado de \structure{modelo de riscos proporcionais estratificado}.
+    - Neste caso supõe-se que os riscos proporcionais valem em cada estrato mas não valem entre estratos.
+    
+# Modelo de Cox estratificado {.allowframebreaks}
+
+- Na aula 7 foram apresentadas técnicas estatísticas para avaliar a adequação do modelo de Cox. 
+- Essencialmente, estas técnicas avaliam a __suposição de riscos proporcionais__.
+- O modelo 
+
+$$
+\lambda(t) = \lambda_0(t)\exp\{\beta_1x_1 + \ldots + \beta_px_p \}
+$$
+não pode ser usado se esta suposição for violada.
+
+\framebreak
+
+- Nestes casos, uma solução para o problema é \structure{estratificar os dados} de modo que a suposição seja valida em cada estrato.
+- Por exemplo, os riscos podem não ser proporcionais entre homens e mulheres mas esta suposição pode valer no estrato formado somente por homens e naquele formado somente por mulheres.
+
+\framebreak
+
+- A análise estratificada consiste em dividir os dados de sobrevivência em \structure{$m$} estratos, de acordo com uma indicação de violação da suposição.
+- O modelo de riscos proporcionais é então expresso como
+
+$$
+\lambda_{ij}(t) = \lambda_{0j}(t)\exp\{\beta_1x_{1ij} + \ldots + \beta_px_{pij} \}
+$$
+para \structure{$i = 1, \ldots, m$} e \structure{$j = 1, \ldots, n_j$}, em que \structure{$n_j$} é o número de observações no $j$-ésimo estrato.
+
+- As funções de base \structure{$\lambda_{01}(t),\ldots, \lambda_{0m}(t)$}, são arbitrárias e completamente não relacionadas.
+
+\framebreak
+
+- A estratificação não cria nenhuma complicação na estimação do vetor de parâmetros \structure{$\beta$}.
+- Uma \structure{função de verossimilhança parcial}, como a apresentada na aula 4, é construída para \structure{cada estrato} e a estimação dos coeficientes de regressão \structure{$\beta$} é baseada na soma dos logaritmos das funções de verossimilhança parciais:
+
+$$
+\ell(\beta) = \ell_1(\beta) + \ldots + \ell_m(\beta),
+$$
+em que $\ell_j(\beta) = \log[L_j(\beta)]$ obtida usando-se somente os dados dos indivíduos no $j$-ésimo estrato.
+
+- As propriedades assintóticas dos estimadores são obtidas a partir doe estimadores do modelo não estratificado^[Colosimo, E. A. (1997). A note on the stratified proportional hazards model. _International Journal of Math. Statist. Sciences_, 6, 201-209.].
+
+## Modelo de Cox estratificado {.allowframebreaks}
+
+- Note que o modelo de Cox estratificado assume que as covariáveis atuam de modo similar na função de risco de base de cada estrato.
+    + Ou seja, \structure{$\beta$} é assumido ser comum para todos os estratos.
+- Esta suposição pode ser testada, por exemplo, o teste da razão de verossimilhanças, cuja estatística de teste é dada, nesse caso, por:
+
+$$
+TRV = - 2 \left[\ell(\widehat{\beta}) - \sum_{j=1}^m{\ell_j(\hat{\beta}_j)}\right],
+$$
+em que \structure{$\ell(\widehat{\beta})$} é o logaritmo da função de verossimilhança parcial sob o modelo que assume \structure{$\beta$}'s comuns em cada estrato e \structure{$\sum_{j=1}^m{\ell_j(\hat{\beta}_j)}$}, o logaritmo da função de verossimilhança parcial sob o modelo que assume \structure{$\beta$}'s distintos em cada estrato.
+
+\framebreak
+
+- Sob a hipótese nula e para grandes amostras, a estatística $TRV$ segue uma distribuição qui-quadrado com $(m-1)p$ graus de liberdade em que $m$ é o número de estratos e $p$ a dimensão do vetor $\beta$.
+
+- O modelo estratificado deve ser usado somente caso realmente necessário.
+    + Ou seja, quando a suposição de riscos proporcionais é violada no modelo de Cox usual.
+- O uso desnecessário da estratificação acarreta em uma perda de eficiência das estimativas obtidas.
+
+## Exemplo {.allowframebreaks}
+
+__Estudo de Leucemia Pediátrica__
+
+- 103 crianças com leucemia pediátrica.
+- O desfecho de interesse é o tempo a partir da remissão (ausência da doença) até a recidiva ou óbito (o que ocorrer primeiro).
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'ex_leucemia.png'))
+
+```
+
+\framebreak
+
+\footnotesize
+
+```{r leucemia, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.leucemia <- read.table(file = "../dados/leucemia.txt",
+                         header = TRUE)
+
+
+head(df.leucemia)
+
+```
+
+\framebreak
+
+```{r leucemia2, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.leucemia$idadec <- ifelse(df.leucemia$idade > 96,1,0)
+df.leucemia$leuinic <- ifelse(df.leucemia$leuini > 75,1,0)
+df.leucemia$zpesoc <- ifelse(df.leucemia$zpeso > -2,1,0)
+df.leucemia$zestc <- ifelse(df.leucemia$zest > -2,1,0)
+df.leucemia$pasc <- ifelse(df.leucemia$pas > 0.05,1,0)
+df.leucemia$vacc <- ifelse(df.leucemia$vac > 15,1,0)
+df.leucemia$pasc <- ifelse(df.leucemia$pas > 5,1,0)
+df.leucemia$riskc <- ifelse(df.leucemia$risk > 1.7,1,0)
+
+```
+
+\framebreak
+
+```{r leucemia.cox, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(survival)
+
+mod1 <- coxph(Surv(time = tempos, event = cens) ~ idadec +
+                zpesoc + pasc + vacc + strata(leuinic),
+               data = df.leucemia, method = "breslow")
+
+summary(mod1)
+
+```
+
+\framebreak
+
+```{r leucemia.cox2, echo=TRUE, message=FALSE, warning=FALSE}
+
+# TRV
+mod20 <- coxph(Surv(time = tempos, event = cens) ~ idadec +
+                zpesoc + pasc + vacc,
+               data = df.leucemia, subset = leuinic == 0,
+               method = "breslow")
+
+mod21 <- coxph(Surv(time = tempos, event = cens) ~ idadec +
+                zpesoc + pasc + vacc,
+               data = df.leucemia, subset = leuinic == 1,
+               method = "breslow")
+
+TRV <- as.numeric(-2 * (logLik(mod1) - (logLik(mod20) + logLik(mod21))))
+TRV
+1 - pchisq(TRV, 4)
+
+
+cox.zph(mod1, transform = "identity")
+# plot(cox.zph(mod1))
+
+```
+
+\normalsize
+
+# Modelo de Cox com covariáveis dependentes do tempo
+
+## Covariáveis dependentes do tempo {.allowframebreaks}
+
+- As covariáveis no modelo de Cox consideradas nas aulas 4-8, foram medidas no início do estudo ou na origem do tempo.
+- Entretanto, existem covariáveis que são monitoradas durante o estudo e seus valores podem mudar ao longo do período de acompanhamento.
+
+\framebreak
+
+::: {.block}
+
+### Estudo de transplante de coração
+
+- Um estudo bastante analisado na literatura é o do programa de transplante de coração de Stanford (Crowley e Hu, 1977)^[Crowley, John, and Marie Hu. “Covariance Analysis of Heart Transplant Survival Data.” Journal of the American Statistical Association, vol. 72, no. 357, 1977, pp. 27–36. JSTOR, https://doi.org/10.2307/2286902. Accessed 29 Sep. 2022.].
+- Neste estudo os pacientes eram aceitos no programa quando se tornavam candidatos a um transplante de coração.
+- Quando surgia um doador, os médicos escolhiam, de acordo com alguns critérios, o candidato que iria receber o coração.
+- Alguns pacientes morreram sem receber o transplante.
+- A forma de alocação estava fortemente viciada na direção daqueles pacientes com maior tempo de sobrevivência pois somente estes pacientes viveram o suficiente para receber o (transplante de) coração.
+- O uso de uma covariável assumindo o valor zero para aqueles esperando o transplante e um para aqueles com coração novo, serve para __minimizar esse vício__ e ela muda de valor assim que o transplante é realizado e é, portanto, dependente do tempo.
+
+:::
+
+## Covariáveis dependentes do tempo {.allowframebreaks}
+
+__Exemplos:__
+
++ Medidas clínicas que são aferidas diversas vezes no mesmo indivíduo:
+    + IMC, pressão arterial, etc;
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='60%', out.height='60%'}
+
+knitr::include_graphics(here::here('images', 'var_td_01.png'))
+
+```
+
+\framebreak
+
++ Alteração de alguma condição clínica ou socioeconômica:
+    + entrada no climatério;
+    + promoção no emprego;
+    + mudança de endereço/vizinhança.
+
+\framebreak
+
++ Realização de algum procedimento ou mudança de tratamento durante o período de observação:
+    + início de hemodiálise em pacientes com doença renal.
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', out.height='60%'}
+
+knitr::include_graphics(here::here('images', 'var_td_02.png'))
+
+```
+
+\framebreak
+
+- Temos ainda as situações em que se deseja estudar o efeito de múltiplas covariáveis mudando no tempo.
+- Também nesses casos precisamos apenas construir um **objeto/arquivo/banco de dados adequado** para que as mudanças nas diversas combinações de atributos ao longo do tempo possam ser **incorporadas** corretamente **no modelo de Cox**.
+
+\framebreak
+
+- Tais variáveis, quando presentes em um estudo, podem ser incorporadas ao modelo de regressão de Cox, **generalizando-o** como:
+
+$$
+\lambda(t) = \lambda_0(t)\exp\{\beta_1x_1(t) + \ldots + \beta_px_p(t) \}.
+$$
+
+- Definido desta forma, o **modelo acima já não mais possui a propriedade de riscos proporcionais**, pois a razão das funções de risco no tempo $t$ para dois indivíduos $i$ e $j$ fica
+
+$$
+\frac{\lambda_i(t)}{\lambda_j(t)} = \exp\{x_i'(t)\beta - x_j'(t)\beta\},
+$$
+que é **dependente do tempo**.
+
+## Estudos de Transplante de medula óssea {.allowframebreaks}
+
+- Estes dados provêm de uma coorte de 96 pacientes submetidos a transplante de medula óssea (TMO) para tratamento de leucemia mieloide crônica, no período de junho de 1986 a junho de 1998, no Centro de Transplante de Medula Óssea do Instituto Nacional do Câncer (Cemo - Inca).
+- O acompanhamento dessa coorte possibilitou o estudo do efeito de fatores prognósticos para a ocorrência de doença do enxerto contra hospedeiro aguda e crônica, da sobrevivência livre de doença e da sobrevivência global.
+
+\framebreak
+
+\scriptsize
+
+| Variável | Descrição                                                                         |
+|----------|-----------------------------------------------------------------------------------|
+| id       | identificador do paciente                                                         |
+| sexo     | 1 = masculino, 2 = feminino                                                       |
+| idade    | idade na data do transplante (5 a 53 anos)                                        |
+| status   | 0 = censura, 1 = óbito                                                            |
+| os       | data do óbito ou censura                                                          |
+| plaq     | recuperação de plaquetas: 0 = não, 1 = sim                                        |
+| tempplaq | dias até a recuperação de plaquetas                                               |
+| deag     | doença enxerto aguda: 0 = não, 1 = sim                                            |
+| tempdeag | dias até a ocorrência da doença enxerto aguda                                     |
+| decr     | doença enxerto crônica: 0 = não, 1 = sim                                          |
+| tempdecr | tempo até a ocorrência da doença enxerto crônica                                  |
+| fase     | fase da doença na data do transplante: 1 = crônica, 2 = aguda, 3 = crise blástica |
+| recplaq  | 0 = plaquetas não recuperadas, 1 = recuperadas                                    |
+| fasegr   | fase da doença na data do transplante agrupada: CP1 = 1a crônica e Other = outras |
+| inicio   | data do transplante ou da mudança de covariável                                   |
+| fim      | data de mudança de covariável ou do fim do estudo                                 |
+
+## Estrutura dos dados mudando no tempo {.allowframebreaks}
+
+\normalsize
+
+- No estudo da sobrevivência de pacientes submetidos ao TMO consideramos, além das variáveis medidas somente no início do estudo, __as que mudam ao longo do tempo__, como:
+    + a ocorrência de doença do enxerto contra o hospedeiro (DECH) em suas formas aguda (`deag`) e crônica (`decr`);
+    + a recuperação no número de plaquetas a um nível acima de 20.000/mm${}^3$ (`recplaq`).
+- É necessário construir um banco de dados comtemplando o momento de mudança de cada uma dessas três características.
+
+\framebreak
+
+\footnotesize
+
+```{r tmo, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.tmo <- read.table(file = here::here("dados","tmopc.csv"),
+                         header = TRUE, sep = ";")
+
+
+head(df.tmo, 14)
+
+```
+
+\framebreak
+
+\normalsize
+
+Observamos que cinco pacientes constituem 14 linhas de registro no banco de dados.
+
+- __Paciente número 1 (2 linhas):__
+    + recuperou as plaquetas > 20.000/mm${}^3$;
+    + não apresentou DECH aguda ou crônica;
+    + não faleceu até o fim do acompanhamento.
+- __Paciente número 3 (4 linhas):__
+    + recuperou as plaquetas > 20.000/mm${}^3$ (dia 27);
+    + apresentou DECH aguda (dia 36);
+    + apresentou DECH crônica (dia 268);
+    + faleceu no dia 434.
+
+\framebreak
+
+- Observe que nos tempos (`inicio` e `fim`), a variável indicadora de censura (`status`) e as variáveis que sofrem alteração ao longo do estudo mudam de uma linha para outra (`deag`, `decr` e `recplaq`);
+- Os valores das variáveis medidas no início do estudo (`idade` e `fasegr`) são repetidos em todas as linhas referentes a um mesmo indivíduo.
+
+\framebreak
+
+- O tempo até a ocorrência do evento pode ser representado da seguinte forma:
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='80%', out.height='60%'}
+
+knitr::include_graphics(here::here('images', 'var_td_03.png'))
+
+```
+
+\framebreak
+
+- Uma preocupação que pode surgir nesse caso (em que múltiplas linhas referem-se a um mesmo paciente) é que estas são __correlacionadas__ e, portanto, os procedimentos usuais de estimação e inferência sobre parâmetros do modelo não poderiam ser utilizados.
+- No entanto, como os __intervalos de tempo__ definidos nas diferentes linhas de cada paciente são __disjuntos__, os resultados do modelo ajustado são inteiramente válidos.
+
+\framebreak
+
+- Isso porque o cálculo da verossimilhança parcial, que envolve a soma das observações de indivíduos sob risco num dado momento em que ocorre um evento, utilizará no máximo uma observação de cada paciente em qualquer momento.
+- Ou seja, a soma ainda é feita sobre um conjunto de __observações independentes__.
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='70%', out.height='70%'}
+
+knitr::include_graphics(here::here('images', 'var_td_04.png'))
+
+```
+
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'cov-td-01.png'))
+
+```
+
+\framebreak
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+
+knitr::include_graphics(here::here('images', 'cov-td-02.png'))
+
+```
+
+\framebreak
+
+- A construção de bancos de dados com múltiplas linhas por indivíduo é simples quando o número de covariáveis variando no tempo é pequeno;
+    + mas pode tornar-se bastante complexa e sujeita a erros à medida que o número de covariáveis aumenta.
+- Ver __criabanco.pdf__ e __tmerge.pdf__ (_Moodle_).
+    
+\framebreak
+
+- Retornando ao exemplo.
+
+\footnotesize
+
+```{r tmo2, echo=TRUE, message=FALSE, warning=FALSE}
+
+df.tmo$sexo <- factor(df.tmo$sexo,
+                      labels = c("masculino", "feminino"))
+df.tmo$deag <- factor(df.tmo$deag,
+                      labels = c("não", "sim"))
+df.tmo$decr <- factor(df.tmo$decr,
+                      labels = c("não", "sim"))
+df.tmo$recplaq <- factor(df.tmo$recplaq,
+                         labels = c("nao rec", "rec"))
+df.tmo$recplaq <- relevel(df.tmo$recplaq, ref = "rec")
+
+```
+
+\framebreak
+
+```{r tmo.cox, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(survival)
+
+mod1 <- coxph(
+  Surv(time = inicio, time2 = fim , event = status) ~ idade +
+    sexo + fasegr + deag + decr + recplaq,
+  data = df.tmo, method = "breslow")
+
+summary(mod1)
+
+```
+
+\framebreak
+
+\normalsize
+
+- A interpretação dos coeficientes do modelo de Cox estendido é feita da mesma forma que nos modelos semiparamétricos usuais em que a exponencial do coeficiente  estima a razão de riscos (_hazard ratio_).
+- No exemplo da TMO, através do teste de Wald, temos que `idade`, `sexo`, `decr` não têm efeito significativo, mas a fase da doença (`fasegr`), a presença de doença de enxerto aguda (`deag`) e a recuperação no número de plaquetas (`reqplaq`) são significativas.
+
+\framebreak
+
+- O risco aumenta 2,5 e 2,8 vezes, respectivamente, para quem fez o transplante fora da primeira fase crônica da doença e para quem apresentou doença do enxerto aguda.
+- Quem não recuperou o número de plaquetas, apresenta risco de óbito sete vezes maior.
+
+<!-- ## Para casa -->
+
+<!-- 1. Leia o capítulo 5 do livro __Análise de sobrevivência aplicada__\footnote{Colosimo, E. A. e Giolo, S. R. {\bf Análise de sobrevivência aplicada}, Blucher, 2006.}. -->
+<!-- 2. Leia os capítulo 6 e 7 do livro __Análise de sobrevivência: teoria e aplicações em saúde__\footnote{Carvalho, M. S., Andreozzi, V. L., Codeço, C. T., Campos, D. P., Barbosa, M. T. S. e Shimakura, E. S. {\bf Análise de sobrevivência: teoria e aplicações em saúde}, 2ª ed. Editora Fiocruz, 2011.}. -->
+
+## Próxima aula
+
+- Eventos (riscos) concorrentes (competitivos).
+<!-- - Análise de sobrevivência multivariada (modelos de fragilidade). -->
+
+## Por hoje é só!
+
+\begin{center}
+{\bf Bons estudos!}
+\end{center}
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='50%', out.height='50%', paged.print=FALSE, purl=FALSE}
+
+knitr::include_graphics(here::here('images', 'Statistically-Insignificant-barras03.jpg'))
+
+```
+
